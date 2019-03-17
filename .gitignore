@@ -10,3 +10,9 @@ pi/lib/tests/test_myutils.py
 pi/lib/tests/test_si1145.py
 pi/lib/tests/test_tsl2591.py
 tools/config.py
+tools/tests/20170414112609.field.txt
+tools/tests/20170414112609.gps.txt
+tools/tests/20170430101612.gps.txt
+tools/tests/__init__.py
+tools/tests/test_fieldfile.py
+tools/tests/test_gpsfile.py
