@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 import pymysql.cursors
 import googlemaps
-import config
+import lib.config as config
 
 class Db(object):
 
