@@ -1,0 +1,11 @@
+
+pi/config.py
+pi/lib/test_comunicate.sh
+pi/lib/tests/__init__.py
+pi/lib/tests/config.py
+pi/lib/tests/test_bme280.py
+pi/lib/tests/test_camera.py
+pi/lib/tests/test_gps.py
+pi/lib/tests/test_myutils.py
+pi/lib/tests/test_si1145.py
+pi/lib/tests/test_tsl2591.py

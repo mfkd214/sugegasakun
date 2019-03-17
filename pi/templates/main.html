@@ -1,0 +1,142 @@
+<!--
+    菅笠くん on RaspberryPI
+    main.html
+
+    Topページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block navigation %}
+<ul class="nav nav-tabs" style="margin-bottom:2px;">
+  <li class="active"><a href="./">菅笠くん</a></li>
+  <li><a href="./camera">カメラ</a></li>
+  <li><a href="./sensor">環境情報</a></li>
+  <li><a href="./log">ログ</a></li>
+</ul>
+{% end %} 
+
+{% block contents %}
+<div class="container">
+  <form id="f" name="f" method="POST">
+    <input type="hidden" id="mode" name="mode" value="" />
+    <div class="row">
+      <div class="col-xs-10"><label>【デバイスステータス】</label></div>
+      <div class="col-xs-2"></div>
+    </div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>Stream</th>
+          <th>Cam</th>
+          <th>GPS</th>
+          <th>センテンス</th>
+          <th>BME280</th>
+          <th>SI1145</th>
+          <th>TSL2591</th>
+        </tr>
+        <tr>
+          <td>{{ streamer_status }}</td>
+          <td>{{ camera_status }}</td>
+          <td>{{ gps_status }}</td>
+          <td>{{ gps_location_status }}</td>
+          <td>{{ bme280_status }}</td>
+          <td>{{ si1145_status }}</td>
+          <td>{{ tsl2591_status }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="row">
+      <div class="col-xs-10"><label>【日時】</label></div>
+      <div class="col-xs-2"><button type="button" class="btn btn-success btn-xs" id="btnSync">同期</button></div>
+    </div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>Client</th>
+          <th>Server</th>
+        </tr>
+        <tr>
+          <td>
+            <span id="browser_now"></span>
+            <input type="hidden" id="client_now" name="client_now" value="" />
+          </td>
+          <td><span>{{ server_datetime }}</span></td>
+        </tr>
+      </table>
+    </div>
+    <div class="row">
+      <div class="col-xs-10"><label>【スケジューラ】{{ scheduler_status }}</label></div>
+      <div class="col-xs-2"><button type="button" class="btn btn-success btn-xs" id="btnChange">切替</button></div>
+    </div>
+    <br />
+    <br />
+    <div class="row">
+      <button type="button" class="btn btn-danger btn-sm" id="btnShutdown">菅笠くん終了</button>
+    </div>
+    <script type="text/javascript">
+        function get_format_client_now() {
+            //  月は 1月が0、12月が11。
+            var dt          =   new Date();        
+            var client_now  =   "";
+
+            client_now  +=  String(dt.getFullYear());
+            client_now  +=  "." + (("0") + String(dt.getMonth() + 1)).substr(-2);
+            client_now  +=  "." + (("0") + String(dt.getDate())).substr(-2);
+            client_now  +=  " " + (("0") + String(dt.getHours())).substr(-2);
+            client_now  +=  ":" + (("0") + String(dt.getMinutes())).substr(-2);
+    
+            return client_now;
+        };
+        function get_client_now() {
+            //  月は 1月が0、12月が11。
+            var dt          =   new Date();        
+            var client_now  =   "";
+
+            client_now  +=  String(dt.getFullYear());
+            client_now  +=  (("0") + String(dt.getMonth() + 1)).substr(-2);
+            client_now  +=  (("0") + String(dt.getDate())).substr(-2);
+            client_now  +=  (("0") + String(dt.getHours())).substr(-2);
+            client_now  +=  (("0") + String(dt.getMinutes())).substr(-2);
+
+            return client_now;
+        };
+ 
+        window.onload = function () {
+
+            var client_now = get_format_client_now();
+            document.getElementById("browser_now").innerText = client_now;
+            document.getElementById("client_now").value = client_now;
+        };
+        document.getElementById("btnSync").onclick = function() {
+            if(!confirm('日時を同期しますか？')){
+                return false;
+            }
+            f.action = "/";
+            var client_now = get_client_now();
+            document.getElementById("client_now").value = client_now;
+            
+            f.submit();            
+        };
+        document.getElementById("btnChange").onclick = function() {
+            if(!confirm('スケジューラを切り替えますか？')){
+                return false;
+            }
+            document.getElementById("mode").value = "1";
+            f.action = "/main";
+            f.submit();                
+        };
+        document.getElementById("btnShutdown").onclick = function() {
+            if(!confirm('菅笠くんを終了しますか？')){
+                return false;
+            }
+            document.getElementById("mode").value = "9";
+            f.action = "/main";
+            f.submit();                
+        };
+    </script>    
+  </form>
+</div>
+{% end %} 
+

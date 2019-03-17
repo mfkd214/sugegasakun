@@ -1,0 +1,45 @@
+<!--
+    菅笠くん on RaspberryPI
+    index.html
+
+    サーバ日時を受け取って、jsで取得した時間と比較し１時間以上差があったらjsで取得した日時をpostする
+
+    1.0.0   mfkd    Created
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>菅笠くん[Internet of TenkaraFishing]</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <form id="f" name="f" method="POST">
+    <input type="hidden" id="client_now" name="client_now" value="" />
+    <script type="text/javascript">
+    window.onload = function () {
+        // server_now: yyyymmddhhmi
+        var server_now  =   {{ server_now }};
+
+        //  月は 1月が0、12月が11。
+        var dt          =   new Date();
+        var client_now  =   "";
+
+        client_now  +=  String(dt.getFullYear());
+        client_now  +=  (("0") + String(dt.getMonth() + 1)).substr(-2);
+        client_now  +=  (("0") + String(dt.getDate())).substr(-2);
+        client_now  +=  (("0") + String(dt.getHours())).substr(-2);
+        client_now  +=  (("0") + String(dt.getMinutes())).substr(-2);
+
+        if (Number(client_now) - Number(server_now) <= 100) {
+            client_now = "";
+        }
+
+        document.getElementById("client_now").value = client_now;
+        document.getElementById("f").submit();
+    };
+  </script>
+
+  </form>
+</body>
+</html>

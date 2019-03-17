@@ -1,0 +1,99 @@
+<!--
+    菅笠くん on RaspberryPI
+    sensor.html
+
+    環境情報ページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block navigation %}
+<ul class="nav nav-tabs" style="margin-bottom:2px;">
+  <li><a href="./">菅笠くん</a></li>
+  <li><a href="./camera">カメラ</a></li>
+  <li class="active"><a href="./sensor">環境情報</a></li>
+  <li><a href="./log">ログ</a></li>
+</ul>
+{% end %} 
+
+{% block contents %}
+<div class="container">
+  <form id="f" name="f" method="POST">
+    <div class="row"><label>{{ server_now }} 現在</label></div>    
+    <div class="row"><label>GPS</label></div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>状態</th>
+          <th>センテンス</th>
+          <th>緯度</th>
+          <th>経度</th>
+          <th>高度</th>
+        </tr>
+        <tr>
+          <td>{{ gps_status }}</td>
+          <td>{{ gps_location_status }}</td>
+          <td>{{ gps_ido }}</td>
+          <td>{{ gps_keido }}</td>
+          <td>{{ gps_koudo }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="row"><label>BME280</label></div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>状態</th>
+          <th>温度</th>
+          <th>湿度</th>
+          <th>気圧</th>
+          <th>高度</th>
+        </tr>
+        <tr>
+          <td>{{ bme_status }}</td>
+          <td>{{ bme_temp }}</td>
+          <td>{{ bme_hum }}</td>
+          <td>{{ bme_press }}</td>
+          <td>{{ bme_alt }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="row"><label>SI1145</label></div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>状態</th>
+          <th>UV INDEX</th>
+          <th>VIS</th>
+          <th>IR</th>
+        </tr>
+        <tr>
+          <td>{{ si_status }}</td>
+          <td>{{ si_uvindex }}</td>
+          <td>{{ si_vis }}</td>
+          <td>{{ si_ir }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="row"><label>TSL2591</label></div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>状態</th>
+          <th>lux</th>
+          <th>full spectrum</th>
+          <th>ir spectrum</th>
+        </tr>
+        <tr>
+          <td>{{ tsl_status }}</td>
+          <td>{{ tsl_lux }}</td>
+          <td>{{ tsl_full }}</td>
+          <td>{{ tsl_ir }}</td>
+        </tr>
+      </table>
+    </div>
+  </form>
+</div>
+{% end %} 
+

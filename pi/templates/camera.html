@@ -1,0 +1,52 @@
+<!--
+    菅笠くん on RaspberryPI
+    camera.html
+
+    カメラページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block navigation %}
+<ul class="nav nav-tabs" style="margin-bottom:2px;">
+  <li><a href="./">菅笠くん</a></li>
+  <li class="active"><a href="./camera">カメラ</a></li>
+  <li><a href="./sensor">環境情報</a></li>
+  <li><a href="./log">ログ</a></li>
+</ul>
+{% end %} 
+
+{% block contents %}
+<div class="container">
+    <form id="f" method="POST">
+
+        <input type="hidden" id="mode" name="mode" value="" />
+
+        <div class="raw">
+            <img class='img-responsive center-block'
+                style="margin-top:2px;margin-bottom:2px;"
+                src="{{ stream_url }}" id="camera" />
+        </div>
+
+        <div class="raw">
+            <div class="btn-group-justified">
+                <a href="#" class="btn btn-success btn-sm" id="btnSnap">撮影</a>
+                <a href="#" class="btn btn-danger btn-sm"  id="btnRestart">再起動</a>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            document.getElementById("btnSnap").onclick = function () {
+                document.getElementById("mode").value = "1";
+                f.submit();
+            };
+            document.getElementById("btnRestart").onclick = function () {
+                document.getElementById("mode").value = "2";
+                f.submit();
+            };
+        </script>
+    </form>
+</div>
+{% end %} 
+

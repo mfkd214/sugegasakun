@@ -1,0 +1,42 @@
+<!--
+    菅笠くん on RaspberryPI
+    log.html
+
+    サンプリングログ一覧ページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block navigation %}
+<ul class="nav nav-tabs" style="margin-bottom:2px;">
+  <li><a href="./">菅笠くん</a></li>
+  <li><a href="./camera">カメラ</a></li>
+  <li><a href="./sensor">環境情報</a></li>
+  <li class="active"><a href="./log">ログ</a></li>
+</ul>
+{% end %} 
+
+{% block contents %}
+<div class="container">
+  <form id="f" name="f" method="POST">
+    <div class="row"><label>{{ server_datetime }} 現在</label></div>    
+    <div class="row"><label>{{ data_dir }}</label></div>
+    <div class="row">
+      <table class="table table-striped">
+        <tr>
+          <th>ファイル</th>
+          <th>サイズ</th>
+        </tr>
+        {% for items in logs %}
+        <tr>
+          <td>{{ items[0] }}</td>
+          <td>{{ items[1] }}</td>
+        </tr>
+        {% end %}
+      </table>
+    </div>
+  </form>
+</div>
+{% end %} 
+
