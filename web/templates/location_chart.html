@@ -1,0 +1,144 @@
+<!--
+    菅笠くん on Web
+    location_chart.html
+
+    ロケーションページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block contents %}
+<div class="container">
+  <form id="f" name="f" method="POST">
+    <div class="row">
+      <div class="col-xs-6">
+        <div class="row">
+          <div class="form-group">
+            <div class="col-xs-1">
+              <label for="month">月：</label>
+            </div>
+            <div class="col-xs-2">
+              <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" />
+            </div>
+            <div class="col-xs-1">
+              <label for="keyword">場所：</label>
+            </div>
+            <div class="col-xs-2">
+              <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
+            </div>
+            <div class="col-xs-2">
+              <input type="button" value="検索" id="btn_search" class="btn btn-primary btn-block" onclick="search();">
+            </div>
+            <div class="col-xs-4">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-6">
+      </div>
+    </div>
+    <script>
+      function search() {
+        var month   = $("#month").val();
+        var keyword = $("#keyword").val();
+        if (month != "") {
+          var url = "/monthlist/" + month;
+          if (keyword != "") {
+            url += "?keyword=" + keyword;
+          }
+          location.href = url;
+        }
+      };
+    </script>
+    <div class="row" style="margin-left:5px;margin-right:5px;">
+      <div class="col-xs-6">
+        <div class="row">
+          <label><a href="/rangelist/{{searchkey}}">{{date_range}}</a> {{ basho_nm }}</label><br />
+          <img src="https://maps.googleapis.com/maps/api/staticmap?size={{ size }}&scale={{ scale }}&maptype={{ maptype }}&path={{ path }}&key={{ key }}" />
+        </div>
+        <div class="row">
+          <table class="table table-striped">
+            <tr>
+              <th></th>
+              <th>最低</th>
+              <th>最高</th>            
+              <th>平均</th>
+            </tr>
+            {% for items in summary_results %}
+            <tr>
+              <td>{{ items[0] }}</td>
+              <td>{{ items[2] }}</td>
+              <td>{{ items[3] }}</td>
+              <td>{{ items[1] }}</td>
+            </tr>
+            {% end %}
+          </table>
+        </div>
+      </div>
+      <div class="col-xs-6">
+        <label><a href="{{ data_url }}">データ</a></label>
+        <span>｜</span>
+        <label><a href="{{ graph_url }}">グラフ</a></label>
+        <span>｜</span>
+        <label>写真</label><br />
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+          google.charts.load('current', {'packages':['corechart']});
+          google.charts.setOnLoadCallback(drawChart);
+
+          function drawChart() {
+            var temp_data = google.visualization.arrayToDataTable([
+              ['time', 'temp'],
+              {% for items in temp_results %}
+              ['{{ items[0] }}', {{ items[1] }}],
+              {% end %}
+            ]);
+            var hum_data = google.visualization.arrayToDataTable([
+              ['time', 'hum'],
+              {% for items in hum_results %}
+              ['{{ items[0] }}', {{ items[1] }}],
+              {% end %}
+            ]);
+            var press_data = google.visualization.arrayToDataTable([
+              ['time', 'press'],
+              {% for items in press_results %}
+              ['{{ items[0] }}', {{ items[1] }}],
+              {% end %}
+            ]);
+            var alt_data = google.visualization.arrayToDataTable([
+              ['time', 'alt'],
+              {% for items in alt_results %}
+              ['{{ items[0] }}', {{ items[1] }}],
+              {% end %}
+            ]);
+
+            var options = {
+              title: 'temp/hum/press/alt',
+              curveType: 'function',
+              legend: { position: 'bottom' }
+            };
+
+            var temp_chart = new google.visualization.LineChart(document.getElementById('temp_chart'));
+            temp_chart.draw(temp_data, options);
+
+            var hum_chart = new google.visualization.LineChart(document.getElementById('hum_chart'));
+            hum_chart.draw(hum_data, options);
+
+            var press_chart = new google.visualization.LineChart(document.getElementById('press_chart'));
+            press_chart.draw(press_data, options);
+
+            var alt_chart = new google.visualization.LineChart(document.getElementById('alt_chart'));
+            alt_chart.draw(alt_data, options);
+          }
+        </script>
+        <div id="temp_chart" style="width: 600px; height: 300px;"></div>
+        <div id="hum_chart" style="width: 600px; height: 300px;"></div>
+        <div id="press_chart" style="width: 600px; height: 300px;"></div>
+        <div id="alt_chart" style="width: 600px; height: 300px;"></div>
+      </div>
+    </div>
+  </form>
+</div>
+{% end %} 
+

@@ -16,3 +16,6 @@ tools/tests/20170430101612.gps.txt
 tools/tests/__init__.py
 tools/tests/test_fieldfile.py
 tools/tests/test_gpsfile.py
+web/lib/config.py
+web/lib/tests/__init__.py
+web/lib/tests/test_bme280.py

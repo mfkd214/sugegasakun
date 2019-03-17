@@ -1,0 +1,29 @@
+<!--
+    菅笠くん on RaspberryPI
+    base.html
+
+    templateのbase
+
+    1.0.0   mfkd    Created
+-->
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <title>菅笠くん[Internet of TenkaraFishing]</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="{{ static_url("css/bootstrap.css") }}" rel="stylesheet">
+    </head>
+    <body>
+        <div style="margin-bottom:10px;"></div>
+        {% block navigation %}
+            <!-- テンプレートに定義 -->
+        {% end %}    
+        <div style="margin-bottom:10px;"></div>
+        {% block contents %}
+            <!-- テンプレートに定義 -->
+        {% end %}
+    </body>
+    <script src="{{ static_url("js/jquery-1.11.3.min.js") }}"></script>
+    <script src="{{ static_url("js/bootstrap.min.js") }}"></script>
+</html>

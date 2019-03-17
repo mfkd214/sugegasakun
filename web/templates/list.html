@@ -1,0 +1,67 @@
+<!--
+    菅笠くん on Web
+    search_list.html
+
+    データ検索ページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block contents %}
+<div class="container">
+  <form id="f" name="f" method="POST">
+    <script>
+      function search() {
+        var month   = $("#month").val();
+        var keyword = $("#keyword").val();
+        if (month != "") {
+          var url = "/monthlist/" + month;
+          if (keyword != "") {
+            url += "?keyword=" + keyword;
+          }
+          location.href = url;
+        }
+      };
+    </script>
+    <div class="col-xs-2">
+      <div class="form-group">
+        <label for="month">月：（1〜12）</label>
+        <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" /> 
+      </div>
+      <div class="form-group">
+        <label for="keyword">場所：（月必須）</label>
+        <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
+      </div>
+      <div class="form-group">
+        <input type="button" value="検索" id="btn_search" class="btn btn-primary btn-block" onclick="search();">
+      </div>
+    </div>
+    <div class="col-xs-10">
+      <div class="row">
+        <table class="table table-striped">
+          <tr>
+            <th>日時</th>
+            <th></th>
+            <th>場所</th>
+            <th>平均気温</th>
+            <th>平均湿度</th>
+            <th>平均気圧</th>            
+          </tr>
+          {% for items in results %}
+          <tr>
+            <td><a href="/rangelist/{{ items[7] }}">{{ items[0] }}</a></td>
+            <td>{{ items[1] }}</td>
+            <td><a href="/location/{{ items[7] }}">{{ items[2] }}({{ items[3] }}m)</a></td>
+            <td>{{ items[4] }}</td>
+            <td>{{ items[5] }}</td>
+            <td>{{ items[6] }}</td>
+          </tr>
+          {% end %}
+        </table>
+      </div>
+    </div>
+  </form>
+</div>
+{% end %} 
+

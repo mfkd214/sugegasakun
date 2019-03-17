@@ -1,0 +1,97 @@
+<!--
+    菅笠くん on Web
+    location.html
+
+    ロケーションページ
+
+    1.0.0   mfkd    Created
+-->
+{% extends base.html %}
+
+{% block navigation %}
+<ul class="nav nav-tabs" style="margin-bottom:2px;">
+  <li><a href="../../">菅笠くん</a></li>
+  <li class="active"><a href="/monthlist/0">検索</a></li>
+</ul>
+{% end %} 
+
+{% block contents %}
+<div class="container">
+  <form id="f" name="f" method="POST">
+    <script>
+      function search() {
+        var month   = $("#month").val();
+        var keyword = $("#keyword").val();
+        if (month != "") {
+          var url = "/monthlist/" + month;
+          if (keyword != "") {
+            url += "?keyword=" + keyword;
+          }
+          location.href = url;
+        }
+      };
+    </script>
+    <div class="row">
+      <div class="col-xs-2">
+        <div class="form-group">
+          <label for="month">月：（1〜12）</label>
+          <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" /> 
+        </div>
+        <div class="form-group">
+          <label for="keyword">場所：（月必須）</label>
+          <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
+        </div>
+        <div class="form-group">
+          <input type="button" value="検索" id="btn_search" class="btn btn-primary btn-block" onclick="search();">
+        </div>
+      </div>
+      <div class="col-xs-5">
+        <div class="row">
+          <label><a href="/rangelist/{{searchkey}}">{{date_range}}</a> {{ basho_nm }}</label><br />
+          <img src="https://maps.googleapis.com/maps/api/staticmap?size={{ size }}&scale={{ scale }}&maptype={{ maptype }}&path={{ path }}&key={{ key }}" />
+        </div>
+        <div class="row">
+          <table class="table table-striped">
+            <tr>
+              <th></th>
+              <th>最低</th>
+              <th>最高</th>            
+              <th>平均</th>
+            </tr>
+            {% for items in summary_results %}
+            <tr>
+              <td>{{ items[0] }}</td>
+              <td>{{ items[2] }}</td>
+              <td>{{ items[3] }}</td>
+              <td>{{ items[1] }}</td>
+            </tr>
+            {% end %}
+          </table>
+        </div>
+      </div>
+      <div class="col-xs-5">
+        <label>データ</label><span>｜</span><label>グラフ</label><span>｜</span><label>写真</label><br />
+        <table class="table table-striped">
+          <tr>
+            <th></th>
+            <th>標高</th>
+            <th>気温</th>
+            <th>湿度</th>
+            <th>気圧</th>
+          </tr>
+          {% for items in detail_results %}
+          <tr>
+            <td>{{ items[0] }}</td>
+            <td>{{ items[1] }}</td>
+            <td>{{ items[2] }}</td>
+            <td>{{ items[3] }}</td>
+            <td>{{ items[4] }}</td>
+          </tr>
+          {% end %}
+        </table>
+      </div>
+    </div>
+  </form>
+</div>
+{% end %} 
+
