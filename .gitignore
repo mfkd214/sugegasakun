@@ -9,3 +9,4 @@ pi/lib/tests/test_gps.py
 pi/lib/tests/test_myutils.py
 pi/lib/tests/test_si1145.py
 pi/lib/tests/test_tsl2591.py
+tools/config.py
