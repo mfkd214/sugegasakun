@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 def _connect_time(datetime_from, datetime_to):
     return "%s〜%s" % (datetime_from[11:], datetime_to[11:])
 
-
 def _format_basho_nm(basho_nm):
     l = basho_nm.split(" ")
     if len(l) > 1:
@@ -15,12 +14,10 @@ def _format_basho_nm(basho_nm):
         return l[1]
     return l[0]
 
-
 def _generate_key(datetime_from, datetime_to):
     return "%s%s" % \
         (datetime_from.replace("-", "").replace(" ", "").replace(":", ""),
          datetime_to.replace("-", "").replace(" ", "").replace(":", ""))
-
 
 def _generate_from_to(iYmd, iRange):
     base = datetime(int(iYmd[0:4]), int(iYmd[4:6]), int(iYmd[6:8]), 0,0,0)
@@ -28,24 +25,20 @@ def _generate_from_to(iYmd, iRange):
     nxt  = base + timedelta(days=iRange)
     return prv.strftime("%m-%d"), nxt.strftime("%m-%d")
 
-
 def _parse_key_datetime(iDate):
     return "%s-%s-%s %s:%s:%s" % ( \
                 iDate[:4],   iDate[4:6],   iDate[6:8],
                 iDate[8:10], iDate[10:12], iDate[12:14])
-
 
 def _parse_key_from_to(iKey):
     fr = _parse_key_datetime(iKey[:14])
     to = _parse_key_datetime(iKey[14:])
     return fr, to
 
-
 def _add_minuites(iDatetime, iMinuites):
     dt = datetime.strptime(iDatetime, "%Y-%m-%d %H:%M:%S")
     nxt = dt + timedelta(minutes=iMinuites)
     return nxt.strftime("%Y-%m-%d %H:%M:%S")
-
 
 def _generate_limittime(iYmdhms, iRange, flg):
     """
@@ -71,6 +64,7 @@ class SugegasakunData(object):
 
         self.db = iDb
 
+
     def search_of_month(self, iMonth, iKeyword):
         """
         """
@@ -85,6 +79,7 @@ class SugegasakunData(object):
                    "%3.2f" % r[6],
                    "%4.2f" % r[7],
                    _generate_key(r[1], r[2]),)
+
 
     def search_of_range(self, iKey, iDayRange, iKeyword):
         """
@@ -110,6 +105,7 @@ class SugegasakunData(object):
 
         return month, results
 
+
     def _get_sumaries(self, iFrom):
         date_range = ""
         basho_nm = ""
@@ -124,6 +120,7 @@ class SugegasakunData(object):
             avg_kiatsu = r[7]
 
         return date_range, basho_nm, avg_ondo, avg_shitsudo, avg_kiatsu
+
 
     def _get_mapdata_details(self, iFrom, iTo):
         # map location
@@ -185,6 +182,7 @@ class SugegasakunData(object):
                 max_shitsudo, min_shitsudo, max_kiatsu, min_kiatsu, \
                 detail_results
 
+
     def get_map_details_data(self, iKey):
         """
         <args>
@@ -225,6 +223,7 @@ class SugegasakunData(object):
         return date_range[5:7], date_range, basho_nm, summary_results, \
                 location, detail_results
 
+
     def get_map_graph_data(self, iKey):
         """
         <args>
@@ -235,6 +234,7 @@ class SugegasakunData(object):
             kiatsu: [(14:00, 14:10, 9999.99),...]
             koudo: [(14:00, 14:10, 9999.99),...]
         """
+
         fr, to = _parse_key_from_to(iKey)
 
         # summary

@@ -22,8 +22,7 @@ class Db(object):
                             port = 3306,
                             user=UID,
                             passwd=PWD,
-                            charset=CHARSET,
-                            cursorclass=pymysql.cursors.DictCursor)
+                            charset=CHARSET)
         self.gmaps = googlemaps.Client(config.GMAP_APIKEY)
 
 
