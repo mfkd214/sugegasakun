@@ -17,6 +17,7 @@ class Gpsfile(object):
 
         self._include_gpsfile()
 
+
     def _convert_location(self, dddmm_mmmm):
         """
         """
@@ -30,6 +31,7 @@ class Gpsfile(object):
 
         return int(d) + float(m) / 60
 
+
     def _convert_jst(self, ddmmyy, hhmiss):
         """
         """
@@ -41,6 +43,7 @@ class Gpsfile(object):
                         int(hhmiss[2:4]),
                         int(hhmiss[4:6]))
         return d + timedelta(hours=9)
+
 
     def _expand_property(self):
         """
@@ -93,6 +96,7 @@ class Gpsfile(object):
 
         return 0
 
+
     def _include_gpsfile(self):
         """
         """
@@ -115,14 +119,14 @@ class Gpsfile(object):
                     ascii_record    =   record.decode("ascii")
                     ascii_record    =   ascii_record.replace("\r", "")
                     ascii_record    =   ascii_record.replace("\n", "")
-                except Exception as ex:
+                except:
                     print("encode error:", self.filename, record)
                     continue
                 
                 # カラム展開
                 columns = ascii_record.split(",")
                 if len(columns) == 0:
-                    print("skip:", filname, record)
+                    print("skip:", self.filname, record)
                     continue
                 if columns[0] == "$GPRMC" and len(columns) == 13:
                     pass
@@ -140,6 +144,5 @@ class Gpsfile(object):
         if self._expand_property() != 0:
             print("not expand property:", self.filename)
             return 1
-            
 
         return rtncd
