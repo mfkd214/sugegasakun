@@ -33,3 +33,4 @@ web/lib/tests/test_sugegasakundata.py
 web/lib/tests/__pycache__/__init__.cpython-36.pyc
 web/lib/tests/__pycache__/test_db.cpython-36.pyc
 *.pyc
+tools/lib/config.py

@@ -110,7 +110,7 @@ class Gpsfile(object):
         readcnt = 0
         with open(self.filename, "rb") as f:
 
-            for no, record in enumerate(f):
+            for record in f:
                 readcnt += 1
 
                 # utf-8エンコードできないものはスキップ
@@ -126,7 +126,7 @@ class Gpsfile(object):
                 # カラム展開
                 columns = ascii_record.split(",")
                 if len(columns) == 0:
-                    print("skip:", self.filname, record)
+                    print("skip:", self.filename, record)
                     continue
                 if columns[0] == "$GPRMC" and len(columns) == 13:
                     pass
