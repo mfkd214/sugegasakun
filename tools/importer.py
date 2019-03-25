@@ -203,8 +203,10 @@ class Impoter(object):
 
 
 if __name__ == "__main__":
+    import lib.config as config
+
     imp = Impoter(False)
 
-    imp.import_datas("/Users/mfkd214/Documents/sugegasakun_data_unzip/20190324")
+    imp.import_datas(config.DATA_DIR)
 
     #imp.create_summary()
