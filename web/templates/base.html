@@ -1,5 +1,5 @@
 <!--
-    菅笠くん on RaspberryPI
+    菅笠くんデータ on Web
     base.html
 
     templateのbase
@@ -15,6 +15,18 @@
         <link href="{{ static_url("css/bootstrap.css") }}" rel="stylesheet">
     </head>
     <body>
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a href="/" class="navbar-brand">菅笠くんデータ照会</a>
+                </div>
+                <ul class="nav navbar-nav navbar-left">
+                    <li><a href="/where">どこに行った？</a></li>
+                    <li><a href="/when">いつ行った？</a></li>
+                    <li><a href="/summary">環境情報サマリ</a></li>
+                </ul>    
+            </div>
+        </div>
         <div style="margin-bottom:10px;"></div>
         {% block navigation %}
             <!-- テンプレートに定義 -->

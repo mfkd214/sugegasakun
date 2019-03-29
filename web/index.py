@@ -23,31 +23,31 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class HomeHandler(BaseHandler):
     async def get(self):
-        pass
+        self.render("index.html")
 
 
 
 class WhereHandler(BaseHandler):
     async def get(self):
-        pass
+        self.render("where.html")
 
 
 
 class WhenHandler(BaseHandler):
     async def get(self):
-        pass
+        self.render("when.html")
 
 
 
 class SummaryHandler(BaseHandler):
     async def get(self):
-        pass
+        self.render("summary.html")
 
 
 
 class TraceHandler(BaseHandler):
     async def get(self):
-        pass
+        self.render("trace.html")
 
 
 

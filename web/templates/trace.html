@@ -1,23 +1,43 @@
 <!--
-    菅笠くん on Web
-    location.html
+    菅笠くんデータ on Web
+    trace.html
 
-    ロケーションページ
+    /trace
 
     1.0.0   mfkd    Created
 -->
 {% extends base.html %}
 
-{% block navigation %}
-<ul class="nav nav-tabs" style="margin-bottom:2px;">
-  <li><a href="../../">菅笠くん</a></li>
-  <li class="active"><a href="/monthlist/0">検索</a></li>
-</ul>
-{% end %} 
-
 {% block contents %}
 <div class="container">
   <form id="f" name="f" method="POST">
+    <div class="row">
+      <div class="col-xs-6">
+        <div class="row">
+          <div class="form-group">
+            <div class="col-xs-1">
+              <label for="month">月：</label>
+            </div>
+            <div class="col-xs-2">
+              <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" />
+            </div>
+            <div class="col-xs-1">
+              <label for="keyword">場所：</label>
+            </div>
+            <div class="col-xs-2">
+              <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
+            </div>
+            <div class="col-xs-2">
+              <input type="button" value="検索" id="btn_search" class="btn btn-primary btn-block" onclick="search();">
+            </div>
+            <div class="col-xs-4">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-6">
+      </div>
+    </div>
     <script>
       function search() {
         var month   = $("#month").val();
@@ -31,21 +51,8 @@
         }
       };
     </script>
-    <div class="row">
-      <div class="col-xs-2">
-        <div class="form-group">
-          <label for="month">月：（1〜12）</label>
-          <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" /> 
-        </div>
-        <div class="form-group">
-          <label for="keyword">場所：（月必須）</label>
-          <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
-        </div>
-        <div class="form-group">
-          <input type="button" value="検索" id="btn_search" class="btn btn-primary btn-block" onclick="search();">
-        </div>
-      </div>
-      <div class="col-xs-5">
+    <div class="row" style="margin-left:5px;margin-right:5px;">
+      <div class="col-xs-6">
         <div class="row">
           <label><a href="/rangelist/{{searchkey}}">{{date_range}}</a> {{ basho_nm }}</label><br />
           <img src="https://maps.googleapis.com/maps/api/staticmap?size={{ size }}&scale={{ scale }}&maptype={{ maptype }}&path={{ path }}&key={{ key }}" />
@@ -69,8 +76,12 @@
           </table>
         </div>
       </div>
-      <div class="col-xs-5">
-        <label>データ</label><span>｜</span><label>グラフ</label><span>｜</span><label>写真</label><br />
+      <div class="col-xs-6">
+        <label><a href="{{ data_url }}">データ</a></label>
+        <span>｜</span>
+        <label><a href="{{ graph_url }}">グラフ</a></label>
+        <span>｜</span>
+        <label>写真</label><br />
         <table class="table table-striped">
           <tr>
             <th></th>
