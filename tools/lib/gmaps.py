@@ -18,5 +18,8 @@ class Gmaps(object):
                                 language="ja",
                                 result_type="locality|sublocality",
                                 location_type="APPROXIMATE")
-        return res[0]["formatted_address"]
-
+        if len(res) > 0:
+            return res[0]["formatted_address"]
+        else:
+            print(ido, keido)
+            return "不明"

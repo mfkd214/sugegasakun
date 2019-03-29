@@ -144,64 +144,80 @@ class Sugegasakun(object):
         finally:
             cur.close()
 
-    def fill_gpsdata(self):
+
+    def import_filename_gpsdata(self):
+        """
+        """
         cur = self.conn.cursor()
         try:
-            cmd = " select" \
-                + "   filename" \
-                + ",  gpsdate" \
-                + " , ido" \
-                + " , keido" \
-                + " , koudo" \
-                + " , substring(gpsdate, 1, 10)" \
-                + " from" \
-                + "  gpsdata" \
-                + " where ido > 0.0" \
-                + " order by" \
-                + "    gpsdate"
+            cmd = "delete from filename_gpsdate"
             cur.execute(cmd)
-            for row in cur.fetchall():
-                yield row
+            
+            cur = self.conn.cursor()
+            cmd = "insert into filename_gpsdate " \
+                + "select " \
+                + "  uni.`filename` " \
+                + ", gps.`gpsdate` " \
+                + "from ( " \
+                + "  select filename from fielddata union " \
+                + "  select filename from gpsdata   union " \
+                + "  select filename from luxdata   union " \
+                + "  select filename from uvindexdata " \
+                + ") uni " \
+                + "left outer join gpsdata gps " \
+                + "  on gps.filename = uni.filename"
+            cur.execute(cmd)
         finally:
             cur.close()
 
-    def fill_gpsdata_datetime_range(self, gpsdate_from, gpsdate_to):
+
+    def patch_filename_gpsdata(self):
         """
+        PATCH.1
+            2018以降、ファイル名と日時は合っているはずなのでGPS不良のため
+            データが取得できていなくてもGPS日時は更新してしまう
+        PATCH.2
+            電源切り忘れによる不要データの削除
         """
         cur = self.conn.cursor()
         try:
-            cmd = " select" \
-                + "   filename" \
-                + " , gpsdate" \
-                + " from" \
-                + "  gpsdata" \
-                + " where gpsdate >= %s" \
-                + " and   gpsdate <  %s" \
-                + " order by" \
-                + "   gpsdate"
-            cur.execute(cmd,(gpsdate_from, gpsdate_to))
+            # PATCH.1
+            cmd = "select filename from filename_gpsdate " \
+                + "where filename > '20180331' "  \
+                + "and   gpsdate is null"
+            cur.execute(cmd)
+
             for row in cur.fetchall():
-                yield row
+                filename = row["filename"]
+                gpsdate = "%s-%s-%s %s:%s:%s" % (filename[0:4],
+                                                 filename[4:6],
+                                                 filename[6:8],
+                                                 filename[8:10],
+                                                 filename[10:12],
+                                                 filename[12:])
+
+                cur = self.conn.cursor()
+                cmd = "update filename_gpsdate " \
+                    + "set gpsdate = %s "  \
+                    + "where filename = %s "
+                cur.execute(cmd, (gpsdate, filename,))
+
+            # PATCH.2
+            cur = self.conn.cursor()
+            cmd = "DELETE FROM filename_gpsdate " \
+                + "WHERE '2017-05-27 16:30:00' < gpsdate " \
+                + "AND   '2017-05-27 99:99:99' > gpsdate "
+            cur.execute(cmd)
+
+            cur = self.conn.cursor()
+            cmd = "DELETE FROM filename_gpsdate " \
+                + "WHERE '2018-09-22 15:06:00' < gpsdate " \
+                + "AND   '2018-09-22 99:99:99' > gpsdate "
+            cur.execute(cmd)
+
         finally:
             cur.close()
 
-    def get_fielddatas(self, filename):
-        """
-        """
-        cur = self.conn.cursor()
-        try:
-            cmd = " select" \
-                + "   ondo" \
-                + " , shitsudo" \
-                + " , kiatsu" \
-                + " from" \
-                + "  fielddata" \
-                + " where filename = %s"
-            cur.execute(cmd,(filename,))
-            for row in cur.fetchall():
-                yield row
-        finally:
-            cur.close()
 
     def delete_summary(self):
         cur = self.conn.cursor()
@@ -211,26 +227,196 @@ class Sugegasakun(object):
         finally:
             cur.close()
 
-    def insert_summary(self, rec):
+    
+    def get_date(self):
         cur = self.conn.cursor()
-        try:           
+        try:
+            cmd = " SELECT distinct " \
+                + "   substring(gpsdate, 1, 10) gps_ymd " \
+                + " FROM " \
+                + "   filename_gpsdate " \
+                + " WHERE gpsdate is not null" \
+                + " ORDER BY " \
+                + "   substring(gpsdate, 1, 10)"
+            cur.execute(cmd)
+            for row in cur.fetchall():
+                yield row
+        finally:
+            cur.close()
+
+
+    def fill_all_datas_gpsymd(self, ymd):
+        cur = self.conn.cursor()
+        try:
+            cmd = " select" \
+                + "   fg.filename" \
+                + " , fg.gpsdate" \
+                + " , ifnull(gps.ido, 0.0) ido" \
+                + " , ifnull(gps.keido, 0.0) keido" \
+                + " , ifnull(gps.koudo, 0.0) koudo" \
+                + " , ifnull(fi.ondo, 0.0) ondo" \
+                + " , ifnull(fi.shitsudo, 0.0) shitsudo" \
+                + " , ifnull(fi.kiatsu, 0.0) kiatsu" \
+                + " , ifnull(uv.uvindex, 0.0) uvindex" \
+                + " , ifnull(lx.lux, 0.0) lux" \
+                + " , substring(fg.gpsdate, 1, 10) gps_ymd" \
+                + " from" \
+                + "  filename_gpsdate fg" \
+                + " left join gpsdata gps" \
+                + "   on gps.filename = fg.filename" \
+                + " left outer join fielddata fi" \
+                + "   on fi.filename = fg.filename" \
+                + " left outer join uvindexdata uv" \
+                + "   on uv.filename = fg.filename" \
+                + " left outer join luxdata lx" \
+                + "   on lx.filename = fg.filename" \
+                + " where fg.gpsdate is not null" \
+                + " and   substring(fg.gpsdate, 1, 10) = %s " \
+                + " order by" \
+                + "   fg.gpsdate" 
+            cur.execute(cmd, (ymd,))
+            for row in cur.fetchall():
+                yield row
+        finally:
+            cur.close()
+
+
+    def import_summary(self, 
+                gps_ymd, start_time, ended_time,
+                ondo_per_day, minondo_per_day, maxondo_per_day,
+                shitsudo_per_day, minshitsudo_per_day, maxshitsudo_per_day,
+                kiatsu_per_day, minkiatsu_per_day, maxkiatsu_per_day,
+                uxindex_per_day, minuvindex_per_day, maxuvindex_per_day,
+                lux_per_day, minlux_per_day, maxlux_per_day, 
+                minkoudo_per_day, maxkoudo_per_day):
+
+        cur = self.conn.cursor()
+        try:
             cur = self.conn.cursor()
-            cmd = "INSERT INTO summary" \
-                + "( gpsdate, gpsdate_from , gpsdate_to" \
-                + ", filename_from, filename_to" \
-                + ", start_ido, start_keido, start_koudo, basho_nm" \
-                + ", avg_ondo, avg_shitsudo, avg_kiatsu" \
+            cmd = "INSERT INTO summary (" \
+                + "  gpsymd, start_time, ended_time" \
+                + ", ondo_avg, ondo_min, ondo_max" \
+                + ", shitsudo_avg, shitsudo_min, shitsudo_max" \
+                + ", kiatsu_avg, kiatsu_min, kiatsu_max" \
+                + ", uvindex_avg, uvindex_min, uvindex_max" \
+                + ", lux_avg, lux_min, lux_max" \
+                + ", koudo_min, koudo_max" \
                 + ") VALUES (" \
                 + "  %s, %s, %s" \
-                + ", %s, %s" \
-                + ", %s, %s, %s, %s" \
                 + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s" \
                 + ")"
             cur.execute(cmd, (
-                    rec[5], rec[1], rec[10],
-                    rec[0], rec[11],
-                    rec[2], rec[3], rec[4], rec[6],
-                    rec[7], rec[8], rec[9],))
+                    gps_ymd, start_time, ended_time,
+                    ondo_per_day, minondo_per_day, maxondo_per_day,
+                    shitsudo_per_day, minshitsudo_per_day, maxshitsudo_per_day,
+                    kiatsu_per_day, minkiatsu_per_day, maxkiatsu_per_day,
+                    uxindex_per_day, minuvindex_per_day, maxuvindex_per_day,
+                    lux_per_day, minlux_per_day, maxlux_per_day, 
+                    minkoudo_per_day, maxkoudo_per_day,))
+        finally:
+            cur.close()
+
+
+    def delete_summary_place(self):
+        cur = self.conn.cursor()
+        try:
+            cmd = "delete from summary_places"
+            cur.execute(cmd)
+        finally:
+            cur.close()
+
+
+    def fill_all_datas_gpsdate_range(self, gpsdate_fr, gpsdate_to):
+        cur = self.conn.cursor()
+        try:
+            cmd = " select" \
+                + "   fg.filename" \
+                + " , fg.gpsdate" \
+                + " , ifnull(gps.ido, 0.0) ido" \
+                + " , ifnull(gps.keido, 0.0) keido" \
+                + " , ifnull(gps.koudo, 0.0) koudo" \
+                + " , ifnull(fi.ondo, 0.0) ondo" \
+                + " , ifnull(fi.shitsudo, 0.0) shitsudo" \
+                + " , ifnull(fi.kiatsu, 0.0) kiatsu" \
+                + " , ifnull(uv.uvindex, 0.0) uvindex" \
+                + " , ifnull(lx.lux, 0.0) lux" \
+                + " , substring(fg.gpsdate, 1, 10) gps_ymd" \
+                + " from" \
+                + "  filename_gpsdate fg" \
+                + " left join gpsdata gps" \
+                + "   on gps.filename = fg.filename" \
+                + " left outer join fielddata fi" \
+                + "   on fi.filename = fg.filename" \
+                + " left outer join uvindexdata uv" \
+                + "   on uv.filename = fg.filename" \
+                + " left outer join luxdata lx" \
+                + "   on lx.filename = fg.filename" \
+                + " where fg.gpsdate is not null" \
+                + " and   fg.gpsdate >= %s " \
+                + " and   fg.gpsdate <  %s " \
+                + " order by" \
+                + "   fg.gpsdate" 
+            cur.execute(cmd, (gpsdate_fr, gpsdate_to, ))
+            for row in cur.fetchall():
+                yield row
+        finally:
+            cur.close()
+
+
+    def import_summary_place(self, 
+                gps_ymd, start_time, ended_time,
+                ido, keido, basho_nm,
+                ondo_per_day, minondo_per_day, maxondo_per_day,
+                shitsudo_per_day, minshitsudo_per_day, maxshitsudo_per_day,
+                kiatsu_per_day, minkiatsu_per_day, maxkiatsu_per_day,
+                uxindex_per_day, minuvindex_per_day, maxuvindex_per_day,
+                lux_per_day, minlux_per_day, maxlux_per_day, 
+                minkoudo_per_day, maxkoudo_per_day,
+                gpsdate_from, gpsdate_to,
+                filename_from, filename_to):
+
+        cur = self.conn.cursor()
+        try:
+            cur = self.conn.cursor()
+            cmd = "INSERT INTO summary_places (" \
+                + "  gpsymd, start_time, ended_time" \
+                + ", ido, keido, basho_nm" \
+                + ", ondo_avg, ondo_min, ondo_max" \
+                + ", shitsudo_avg, shitsudo_min, shitsudo_max" \
+                + ", kiatsu_avg, kiatsu_min, kiatsu_max" \
+                + ", uvindex_avg, uvindex_min, uvindex_max" \
+                + ", lux_avg, lux_min, lux_max" \
+                + ", koudo_min, koudo_max" \
+                + ", gpsdate_from, gpsdate_to" \
+                + ", filename_from, filename_to" \
+                + ") VALUES (" \
+                + "  %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s, %s" \
+                + ", %s, %s" \
+                + ", %s, %s" \
+                + ", %s, %s" \
+                + ")"
+            cur.execute(cmd, (
+                    gps_ymd, start_time, ended_time,
+                    ido, keido, basho_nm,
+                    ondo_per_day, minondo_per_day, maxondo_per_day,
+                    shitsudo_per_day, minshitsudo_per_day, maxshitsudo_per_day,
+                    kiatsu_per_day, minkiatsu_per_day, maxkiatsu_per_day,
+                    uxindex_per_day, minuvindex_per_day, maxuvindex_per_day,
+                    lux_per_day, minlux_per_day, maxlux_per_day, 
+                    minkoudo_per_day, maxkoudo_per_day,
+                    gpsdate_from, gpsdate_to,
+                    filename_from, filename_to,))
         finally:
             cur.close()
 
