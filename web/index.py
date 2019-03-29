@@ -1,9 +1,11 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
-
+import tornado.httpserver
+import tornado.ioloop
 import tornado.web
 import tornado.locks
+from tornado import gen
 from tornado.options import options
 
 import config
@@ -22,31 +24,42 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class HomeHandler(BaseHandler):
-    async def get(self):
-        self.render("index.html")
+    
+    def get(self):
+
+        records = self.application.db.fill_new10()
+        print("get")
+        self.render("index.html",
+                    records=records)
 
 
 
 class WhereHandler(BaseHandler):
-    async def get(self):
-        self.render("where.html")
+    def get(self):
+        self.render("where.html",
+                    month = "",
+                    day = "",
+                    year = "")
 
 
 
 class WhenHandler(BaseHandler):
-    async def get(self):
-        self.render("when.html")
+    def get(self):
+        self.render("when.html",
+                    keyword = "",
+                    year = "",
+                    month = "")
 
 
 
 class SummaryHandler(BaseHandler):
-    async def get(self):
+    def get(self):
         self.render("summary.html")
 
 
 
 class TraceHandler(BaseHandler):
-    async def get(self):
+    def get(self):
         self.render("trace.html")
 
 
@@ -71,8 +84,7 @@ class Application(tornado.web.Application):
         super(Application, self).__init__(handlers, **settings)
 
 
-
-async def main():
+def main():
 
     tornado.options.parse_command_line()
 
@@ -81,13 +93,10 @@ async def main():
 
     app = Application(mydb)
     app.listen(config.HTTP_PORT)
+    
+    tornado.ioloop.IOLoop.current().start()
 
-    # In this demo the server will simply run until interrupted
-    # with Ctrl-C, but if you want to shut down more gracefully,
-    # call shutdown_event.set().
-    shutdown_event = tornado.locks.Event()
-    await shutdown_event.wait()
 
 
 if __name__ == "__main__":
-    tornado.ioloop.IOLoop.current().run_sync(main)
+    main()

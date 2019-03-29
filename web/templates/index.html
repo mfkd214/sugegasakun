@@ -9,16 +9,36 @@
 {% extends base.html %}
 
 {% block contents %}
-<div class="container" style="margin-top: 70px;">
+<div class="container">
     <div class="row" style="text-align:center;">
-        <img src="{{ static_url("images/top.jpg") }} width="480" height="320">
+        <img src="{{ static_url("images/top1.jpg") }} width="480" height="320">
+        <img src="{{ static_url("images/top2.jpg") }} width="480" height="320">
     </div>
     <div class="row" style="padding-left: 10px; padding-right: 10px;">
-        <h3>最新</h3>
-        <table class="table">
+        <h3>最新10件</h3>
+        <table class="table table-condensed table-striped table-hover">
         <tr>
-            <th>日付</th><th>時間帯</th><th>場所</th><th>気温</th><th>湿度</th><th>気圧</th><th>UV INDEX</th><th>明るさ</th>
+            <th>日付</th>
+            <th>時間帯</th>
+            <th>場所</th>
+            <th style="text-align: right;">気温</th>
+            <th style="text-align: right;">湿度</th>
+            <th style="text-align: right;">気圧</th>
+            <th style="text-align: right;">UV INDEX</th>
+            <th style="text-align: right;">明るさ</th>
         </tr>
+        {% for rec in records %}
+        <tr>
+            <td><a href='/trace/{{ rec["gpsymd"] }}'>{{ rec["gpsymd"] }}</a></td>
+            <td>{{ rec["start_time"] }}〜{{ rec["ended_time"] }}</td>
+            <td>{{ rec["basho_nm"] }}</th>
+            <td style="text-align: right;">{{ rec["ondo_avg"] }} ℃</td>
+            <td style="text-align: right;">{{ rec["shitsudo_avg"] }} %</td>
+            <td style="text-align: right;">{{ rec["kiatsu_avg"] }} hpa</td>
+            <td style="text-align: right;">{{ rec["uvindex_avg"] }}</td>
+            <td style="text-align: right;">{{ rec["lux_avg"] }} lux</td>
+        </tr>
+        {% end %}
     </table>
 </div>    
 {% end %} 

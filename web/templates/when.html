@@ -8,13 +8,6 @@
 -->
 {% extends base.html %}
 
-{% block navigation %}
-<ul class="nav nav-tabs" style="margin-bottom:2px;">
-  <li><a href="../../">菅笠くん</a></li>
-  <li class="active"><a href="/monthlist/0">検索</a></li>
-</ul>
-{% end %} 
-
 {% block contents %}
 <div class="container">
   <form id="f" name="f" method="POST">
@@ -31,67 +24,40 @@
         }
       };
     </script>
-    <div class="row">
-      <div class="col-xs-2">
-        <div class="form-group">
-          <label for="month">月：（1〜12）</label>
-          <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" /> 
-        </div>
-        <div class="form-group">
-          <label for="keyword">場所：（月必須）</label>
-          <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
-        </div>
-        <div class="form-group">
-          <input type="button" value="検索" id="btn_search" class="btn btn-primary btn-block" onclick="search();">
+    <div class="col-xs-1">
+        <div class="row" style="padding-left: 10px;padding-right: 5px;">
+          <div class="form-group">
+            <label for="keyword">場所：</label>
+            <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
+          </div>
+          <div class="form-group">
+            <label for="day">年：</label>
+            <input type="text" name="year" value="{{ year }}" id="year" placeholder="年を入力..." class="form-control" /> 
+          </div>
+          <div class="form-group">
+            <label for="day">月：</label>
+            <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" /> 
+          </div>
+          <input type="submit" class="btn btn-block btn-success" value="いつ行った？"/>
         </div>
       </div>
-      <div class="col-xs-5">
-        <div class="row">
-          <label><a href="/rangelist/{{searchkey}}">{{date_range}}</a> {{ basho_nm }}</label><br />
-          <img src="https://maps.googleapis.com/maps/api/staticmap?size={{ size }}&scale={{ scale }}&maptype={{ maptype }}&path={{ path }}&key={{ key }}" />
-        </div>
-        <div class="row">
-          <table class="table table-striped">
+      <div class="col-xs-11 style="margin-left: 5px;margin-right: 10px;"">
+        <div class="row" style="padding-left: 5px;padding-right: 10px;">
+          <table class="table table-condensed table-striped table-hover">
             <tr>
-              <th></th>
-              <th>最低</th>
-              <th>最高</th>            
-              <th>平均</th>
+                <th>日付</th>
+                <th>時間帯</th>
+                <th>場所</th>
+                <th style="text-align: right;">気温</th>
+                <th style="text-align: right;">湿度</th>
+                <th style="text-align: right;">気圧</th>
+                <th style="text-align: right;">UV INDEX</th>
+                <th style="text-align: right;">明るさ</th>
             </tr>
-            {% for items in summary_results %}
-            <tr>
-              <td>{{ items[0] }}</td>
-              <td>{{ items[2] }}</td>
-              <td>{{ items[3] }}</td>
-              <td>{{ items[1] }}</td>
-            </tr>
-            {% end %}
           </table>
         </div>
       </div>
-      <div class="col-xs-5">
-        <label>データ</label><span>｜</span><label>グラフ</label><span>｜</span><label>写真</label><br />
-        <table class="table table-striped">
-          <tr>
-            <th></th>
-            <th>標高</th>
-            <th>気温</th>
-            <th>湿度</th>
-            <th>気圧</th>
-          </tr>
-          {% for items in detail_results %}
-          <tr>
-            <td>{{ items[0] }}</td>
-            <td>{{ items[1] }}</td>
-            <td>{{ items[2] }}</td>
-            <td>{{ items[3] }}</td>
-            <td>{{ items[4] }}</td>
-          </tr>
-          {% end %}
-        </table>
-      </div>
-    </div>
-  </form>
+    </form>
 </div>
 {% end %} 
 

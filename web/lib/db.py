@@ -31,6 +31,51 @@ class Sugegasakun(object):
                             cursorclass=pymysql.cursors.DictCursor)
 
 
+    def fill_new10(self):
+        """
+        """
+        with self.conn.cursor() as cur:
+            cmd = " SELECT" \
+                + "   s.gpsymd" \
+                + " , s.start_time" \
+                + " , s.ended_time" \
+                + " , cast(round(s.ondo_min, 0) as char) ondo_min" \
+                + " , cast(round(s.ondo_max, 0) as char) ondo_max" \
+                + " , cast(round(s.ondo_avg, 0) as char) ondo_avg" \
+                + " , cast(round(s.shitsudo_min, 0) as char) shitsudo_min" \
+                + " , cast(round(s.shitsudo_max, 0) as char) shitsudo_max" \
+                + " , cast(round(s.shitsudo_avg, 0) as char) shitsudo_avg" \
+                + " , cast(round(s.kiatsu_min, 2) as char) kiatsu_min" \
+                + " , cast(round(s.kiatsu_max, 2) as char) kiatsu_max" \
+                + " , cast(round(s.kiatsu_avg, 2) as char) kiatsu_avg" \
+                + " , cast(round(s.uvindex_min, 1) as char) uvindex_min" \
+                + " , cast(round(s.uvindex_max, 1) as char) uvindex_max" \
+                + " , cast(round(s.uvindex_avg, 1) as char) uvindex_avg" \
+                + " , cast(round(s.lux_min, 0) as char) lux_min" \
+                + " , cast(round(s.lux_max, 0) as char) lux_max" \
+                + " , cast(round(s.lux_avg, 0) as char) lux_avg" \
+                + " , cast(round(s.koudo_min, 0) as char) koudo_min" \
+                + " , cast(round(s.koudo_max, 0) as char) koudo_max" \
+                + " , if (g.cnt = 1, g.basho_nm, concat(g.basho_nm, ' 等')) basho_nm" \
+                + " from" \
+                + "   summary s" \
+                + " left outer join (" \
+                + "   select gpsymd, MAX(basho_nm) basho_nm, count(*) cnt" \
+                + "   from summary_places" \
+                + "   group by gpsymd" \
+                + " ) g" \
+                + "   on g.gpsymd = s.gpsymd" \
+                + " ORDER by" \
+                + "   s.gpsymd DESC" \
+                + " LIMIT 10"
+            cur.execute(cmd)
+            for row in cur.fetchall():
+                print("row")
+                yield row
+
+
+
+
     def fill_summary_of_month(self, iMonth, iKeyword):
         """
         """
