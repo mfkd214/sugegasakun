@@ -2,28 +2,33 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 import pymysql.cursors
-import googlemaps
-import lib.config as config
 
-class Db(object):
+class Sugegasakun(object):
 
-    def __init__(self, is_local=False):
+    def __init__(self, localdb):
 
-        if not is_local:
+        if localdb == "":
             # MySQL
-            DB      = config.DB
-            HOST    = config.HOST
-            UID     = config.UID
-            PWD     = config.PWD
-            CHARSET = config.CHARSET
+            self.is_local = False
+            self.conn = None
+
+        else:
+            # sqlite
+            import sqlite3
+            self.is_local = True
+            self.conn = sqlite3.connect(localdb)
+
+
+    def connect(self, host, db, uid, pwd):
+        if not self.is_local:
             self.conn = pymysql.connect(
-                            db=DB,
-                            host=HOST,
+                            host=host,
+                            db=db,
                             port = 3306,
-                            user=UID,
-                            passwd=PWD,
-                            charset=CHARSET)
-        self.gmaps = googlemaps.Client(config.GMAP_APIKEY)
+                            user=uid,
+                            passwd=pwd,
+                            charset="utf8",
+                            cursorclass=pymysql.cursors.DictCursor)
 
 
     def fill_summary_of_month(self, iMonth, iKeyword):

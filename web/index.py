@@ -1,178 +1,93 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
-from datetime import datetime
-import tornado.ioloop
-import tornado.web
+import os
 
-from lib import sugegasakundata, db
+import tornado.web
+import tornado.locks
+from tornado.options import options
+
+import config
+from lib import db
 #-----------------------------------------------------------------------
-#   菅笠くん on Web
-#   pi_index.py
+#   菅笠くんデータ on Web
+#   index.py
 #
-#   菅笠くん on RaspberryPIのWEBサービス
+#   菅笠くん on RaspberryPIで収集したデータを照会する
 #
 #   1.0.0               mfkd    Created
 #-----------------------------------------------------------------------
-_suge_dt = sugegasakundata.SugegasakunData(db.Db(False))
-class IndexHandler(tornado.web.RequestHandler):
-    """ /
-    """
-    def get(self):
-        #-- 月
-        now = datetime.now()
-        month = str(now.month)
-
-        #-- 場所
-        keyword = ""
-
-        #-- 画面表示
-        self.render("index.html",
-                    month = month,
-                    keyword = keyword,
-                    results = _suge_dt.search_of_month(month, keyword))
+class BaseHandler(tornado.web.RequestHandler):
+    pass
 
 
 
-class MonthListHandler(tornado.web.RequestHandler):
-    """ 検索ページ
-    """
-    def get(self, iMonth):
-
-        #-- 月
-        now = datetime.now()
-        month = str(now.month)
-        if iMonth != "0":
-            month = iMonth
-
-        #-- 場所        
-        keyword = ""
-        if "keyword" in self.request.arguments:
-            tmp = self.request.arguments["keyword"]
-            keyword = tmp[0].decode("utf-8")
-
-        #-- 画面表示
-        self.render("index.html",
-                    month = month,
-                    keyword = keyword,
-                    results = _suge_dt.search_of_month(month, keyword))
+class HomeHandler(BaseHandler):
+    async def get(self):
+        pass
 
 
-class RangeListHandler(tornado.web.RequestHandler):
-    """ 検索ページ > 日付クリック
-    """
-    def get(self, iKey):
 
-        #-- Keyの先頭8文字を切り出す。
-        ymd = iKey[:8]
-
-        #-- 場所        
-        keyword = ""
-        if "keyword" in self.request.arguments:
-            tmp = self.request.arguments["keyword"]
-            keyword = tmp[0].decode("utf-8")
-
-        month, results = _suge_dt.search_of_range(ymd, 15, keyword)
-
-        #-- 画面表示
-        self.render("index.html",
-                    month = month,
-                    keyword = keyword,
-                    results = results)
+class WhereHandler(BaseHandler):
+    async def get(self):
+        pass
 
 
-class LocationHandler(tornado.web.RequestHandler):
-    """ 検索ページ > 場所クリック
-    """
-    def get(self, iKey):
 
-        month, date_range, basho_nm, summary_results, location, detail_results = \
-            _suge_dt.get_map_details_data(iKey)
-        #-- Map
-        center  =   "{0},{1}".format(36.68656433333334, 139.46706666666665)
-        zoom    =   14
-        size    =   "{0}x{1}".format("640", "480")
-        scale   =   1
-        maptype =   "terrain"
-        key     =   "AIzaSyDtG6AtHpHBvF6ooHys3ikNtmzruasZTrM"
-        path    =   "color:0x0000ff|weight:5" + location 
-        self.render("location.html",
-                    month       =   month,
-                    keyword     =   "",
-                    searchkey   =   iKey,
-                    center      =   center,
-                    zoom        =   zoom,
-                    size        =   size,
-                    scale       =   scale,
-                    maptype     =   maptype,
-                    path        =   path,
-                    key         =   key,
-                    date_range  =   date_range,
-                    basho_nm    =   basho_nm,
-                    summary_results = summary_results,
-                    detail_results  = detail_results,
-                    data_url = "/location/" + iKey,
-                    graph_url = "/location/" + iKey + "/graph")
+class WhenHandler(BaseHandler):
+    async def get(self):
+        pass
 
 
-class LocationGraphHandler(tornado.web.RequestHandler):
-    """ 検索ページ > 場所 > グラフ
-    """
-    def get(self, iKey):
-        print("LocationGraphHandler")
-        month, date_range, basho_nm, summary_results, location, \
-            alt_results, temp_results, hum_results, press_results = \
-            _suge_dt.get_map_graph_data(iKey)
-        #-- Map
-        center  =   "{0},{1}".format(36.68656433333334, 139.46706666666665)
-        zoom    =   14
-        size    =   "{0}x{1}".format("640", "480")
-        scale   =   1
-        maptype =   "terrain"
-        key     =   "AIzaSyDtG6AtHpHBvF6ooHys3ikNtmzruasZTrM"
-        path    =   "color:0x0000ff|weight:5" + location 
-        self.render("location_chart.html",
-                    month       =   month,
-                    keyword     =   "",
-                    searchkey   =   iKey,
-                    center      =   center,
-                    zoom        =   zoom,
-                    size        =   size,
-                    scale       =   scale,
-                    maptype     =   maptype,
-                    path        =   path,
-                    key         =   key,
-                    date_range  =   date_range,
-                    basho_nm    =   basho_nm,
-                    summary_results = summary_results,
-                    alt_results  = alt_results,
-                    temp_results  = temp_results,
-                    hum_results  = hum_results,
-                    press_results  = press_results,
-                    data_url = "/location/" + iKey,
-                    graph_url = "/location/" + iKey + "/graph")
 
+class SummaryHandler(BaseHandler):
+    async def get(self):
+        pass
+
+
+
+class TraceHandler(BaseHandler):
+    async def get(self):
+        pass
+
+
+
+class Application(tornado.web.Application):
+
+    def __init__(self, db):
+        self.db = db
+        handlers = [
+            (r"/", HomeHandler),
+            (r"/where", WhereHandler),
+            (r"/when", WhenHandler),
+            (r"/summary", SummaryHandler),
+            (r"/trace", TraceHandler),
+        ]
+        settings = dict(
+            template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            static_path=os.path.join(os.path.dirname(__file__), "static"),
+            xsrf_cookies=True,
+            debug=True,
+        )
+        super(Application, self).__init__(handlers, **settings)
+
+
+
+async def main():
+
+    tornado.options.parse_command_line()
+
+    mydb = db.Sugegasakun(config.LOCAL_DB)
+    mydb.connect(config.HOST, config.DB, config.UID, config.PWD)
+
+    app = Application(mydb)
+    app.listen(config.HTTP_PORT)
+
+    # In this demo the server will simply run until interrupted
+    # with Ctrl-C, but if you want to shut down more gracefully,
+    # call shutdown_event.set().
+    shutdown_event = tornado.locks.Event()
+    await shutdown_event.wait()
 
 
 if __name__ == "__main__":
-    import sys
-    import os
-    def make_app():
-        return tornado.web.Application([
-            (r"/", IndexHandler),
-            (r"/monthlist/(.*)", MonthListHandler),
-            (r"/rangelist/(.*)", RangeListHandler),
-            (r"/location/(.*)/graph", LocationGraphHandler),
-            (r"/location/(.*)", LocationHandler),
-            ],
-            template_path=os.path.join(os.getcwd(), "templates"),
-            static_path=os.path.join(os.getcwd(),   "static"))
-
-    port = 8000
-    argv = sys.argv
-    if len(argv) > 1:
-        port = int(argv[1])
-
-    app = make_app()
-    app.listen(port)
-
-    tornado.ioloop.IOLoop.current().start()
+    tornado.ioloop.IOLoop.current().run_sync(main)
