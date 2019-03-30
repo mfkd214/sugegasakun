@@ -1,6 +1,7 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
+from datetime import datetime
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -19,7 +20,37 @@ from lib import db
 #   1.0.0               mfkd    Created
 #-----------------------------------------------------------------------
 class BaseHandler(tornado.web.RequestHandler):
-    pass
+
+    def request_parse(self):
+        self.graph_val_kb = "0"
+
+        cnt = 0
+
+        self.year = ""
+        arg = self.get_arguments("year")
+        if len(arg) > 0:
+            cnt += 1
+            self.year = arg[0]
+
+        self.month = ""
+        arg = self.get_arguments("month")
+        if len(arg) > 0:
+            cnt += 1
+            self.month = arg[0]
+
+        self.day = ""
+        arg = self.get_arguments("day")
+        if len(arg) > 0:
+            cnt += 1
+            self.day = arg[0]
+
+        self.basho = ""
+        arg = self.get_arguments("basho")
+        if len(arg) > 0:
+            cnt += 1
+            self.basho = arg[0]
+
+        return cnt
 
 
 
@@ -28,7 +59,6 @@ class HomeHandler(BaseHandler):
     def get(self):
 
         records = self.application.db.fill_new10()
-        print("get")
         self.render("index.html",
                     records=records)
 
@@ -36,25 +66,58 @@ class HomeHandler(BaseHandler):
 
 class WhereHandler(BaseHandler):
     def get(self):
-        self.render("where.html",
-                    month = "",
-                    day = "",
-                    year = "")
+
+        cnt = self.request_parse()
+        print(cnt)
+        if cnt == 0:
+            self.month = str(datetime.now().month)
+
+        records = None
+        if self.day == "":
+            records = self.application.db.fill_where_year_month(
+                                            self.year, self.month)
+        else:
+            records = self.application.db.fill_where_week(
+                                            self.year, self.month, self.day)
+
+        self.render("where.html", 
+                    month = self.month,
+                    day = self.day,
+                    year = self.year,
+                    records = records )
 
 
 
 class WhenHandler(BaseHandler):
     def get(self):
+
+        self.request_parse()
+        cnt = self.request_parse()
+        if cnt == 0:
+            self.month = str(datetime.now().month)
+
+        records = self.application.db.fill_when(
+                                        self.basho, self.year, self.month)
+
         self.render("when.html",
-                    keyword = "",
-                    year = "",
-                    month = "")
+                    basho = self.basho,
+                    year = self.year,
+                    month = self.month,
+                    records = records )
 
 
 
 class SummaryHandler(BaseHandler):
     def get(self):
-        self.render("summary.html")
+
+        self.request_parse()
+
+        self.render("summary.html",
+                    basho = self.basho,
+                    year = self.year,
+                    month = self.month,
+                    day = self.day,
+                    graph_val_kb = self.graph_val_kb)
 
 
 

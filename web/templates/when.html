@@ -12,37 +12,33 @@
 <div class="container">
   <form id="f" name="f" method="POST">
     <script>
-      function search() {
-        var month   = $("#month").val();
-        var keyword = $("#keyword").val();
-        if (month != "") {
-          var url = "/monthlist/" + month;
-          if (keyword != "") {
-            url += "?keyword=" + keyword;
-          }
-          location.href = url;
-        }
+      function generate_query() {
+        var basho = $("#basho").val();
+        var year = $("#year").val();
+        var month = $("#month").val();
+        q = "/when?basho=" + basho + "&month=" + month + "&year=" + year; 
+        location.href = q;
       };
     </script>
     <div class="col-xs-1">
-        <div class="row" style="padding-left: 10px;padding-right: 5px;">
-          <div class="form-group">
-            <label for="keyword">場所：</label>
-            <input type="text" name="keyword" value="{{ keyword }}" id="keyword" placeholder="場所を入力..." class="form-control" /> 
-          </div>
-          <div class="form-group">
-            <label for="day">年：</label>
-            <input type="text" name="year" value="{{ year }}" id="year" placeholder="年を入力..." class="form-control" /> 
-          </div>
-          <div class="form-group">
+      <div class="row" style="padding-left: 2px;padding-right: 2px;">
+        <div class="form-group">
+          <label for="basho">場所：</label>
+          <input type="text" name="basho" value="{{ basho }}" id="basho" placeholder="場所を入力..." class="form-control" /> 
+        </div>
+        <input type="button" class="btn btn-block btn-success" value="に、いつ？" onclick="generate_query();"/>
+        <div class="form-group">
             <label for="day">月：</label>
             <input type="text" name="month" value="{{ month }}" id="month" placeholder="月を入力..." class="form-control" /> 
-          </div>
-          <input type="submit" class="btn btn-block btn-success" value="いつ行った？"/>
+          </div>  
+        <div class="form-group">
+          <label for="day">年：</label>
+          <input type="text" name="year" value="{{ year }}" id="year" placeholder="年を入力..." class="form-control" /> 
         </div>
       </div>
-      <div class="col-xs-11 style="margin-left: 5px;margin-right: 10px;"">
-        <div class="row" style="padding-left: 5px;padding-right: 10px;">
+    </div>
+      <div class="col-xs-11">
+        <div class="row" style="padding-left: 2px;padding-right: 2px;">
           <table class="table table-condensed table-striped table-hover">
             <tr>
                 <th>日付</th>
@@ -54,6 +50,24 @@
                 <th style="text-align: right;">UV INDEX</th>
                 <th style="text-align: right;">明るさ</th>
             </tr>
+            {% for rec in records %}
+            <tr>
+              <td>
+                {% if rec["basho_nm"] == None %}
+                  <span>{{ rec["gpsymd"] }}</span>
+                {% else %}
+                  <a href='/trace/{{ rec["gpsymd"] }}'>{{ rec["gpsymd"] }}</a>
+                {% end %}
+              </td>
+              <td>{{ rec["start_time"] }}〜{{ rec["ended_time"] }}</td>
+              <td>{{ rec["basho_nm"] }}</th>
+              <td style="text-align: right;">{{ rec["ondo_avg"] }} ℃</td>
+              <td style="text-align: right;">{{ rec["shitsudo_avg"] }} %</td>
+              <td style="text-align: right;">{{ rec["kiatsu_avg"] }} hpa</td>
+              <td style="text-align: right;">{{ rec["uvindex_avg"] }}</td>
+              <td style="text-align: right;">{{ rec["lux_avg"] }} lux</td>
+            </tr>
+            {% end %}  
           </table>
         </div>
       </div>
