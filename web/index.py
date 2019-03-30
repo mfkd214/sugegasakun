@@ -122,8 +122,20 @@ class SummaryHandler(BaseHandler):
 
 
 class TraceHandler(BaseHandler):
-    def get(self):
-        self.render("trace.html")
+    def get(self, ymd):
+        zoom = 14
+        size = "640x480"
+        scale = 1
+        maptype = "terrain"
+        path = "color:0x000ff|weight:5"
+        apikey = config.GMAP_APIKEY
+        self.render("trace.html",
+                    zoom = zoom,
+                    size = size,
+                    scale = scale,
+                    maptype = maptype,
+                    path = path,
+                    key = apikey)
 
 
 
@@ -136,7 +148,7 @@ class Application(tornado.web.Application):
             (r"/where", WhereHandler),
             (r"/when", WhenHandler),
             (r"/summary", SummaryHandler),
-            (r"/trace", TraceHandler),
+            (r"/trace/(.*)", TraceHandler),
         ]
         settings = dict(
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
