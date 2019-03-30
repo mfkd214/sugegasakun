@@ -22,6 +22,18 @@
           <th style="text-align: right;">UV INDEX</th>
           <th style="text-align: right;">明るさ</th>
       </tr>
+      {% for rec in records %}
+      <tr>
+          <td><a href='/trace/{{ rec["gpsymd"] }}/{{ rec["start_time"] }}'>{{ rec["gpsymd"] }}</a></td>
+          <td>{{ rec["start_time"] }}〜{{ rec["ended_time"] }}</td>
+          <td>{{ rec["basho_nm"] }}</th>
+          <td style="text-align: right;">{{ rec["ondo_avg"] }} ℃</td>
+          <td style="text-align: right;">{{ rec["shitsudo_avg"] }} %</td>
+          <td style="text-align: right;">{{ rec["kiatsu_avg"] }} hpa</td>
+          <td style="text-align: right;">{{ rec["uvindex_avg"] }}</td>
+          <td style="text-align: right;">{{ rec["lux_avg"] }} lux</td>
+      </tr>
+      {% end %}
     </table>
   </div>
   <div class="row" style="margin-left:2px;margin-right:2px;">

@@ -192,6 +192,65 @@ class Sugegasakun(object):
                 yield row
 
 
+    def fill_summary_places(self, ymd, start_time):
+
+        self._open_connect()
+
+        with self.conn.cursor() as cur:
+            cmd = " SELECT" \
+                + "   s.gpsymd" \
+                + " , s.start_time" \
+                + " , s.ended_time" \
+                + " , s.basho_nm" \
+                + " , cast(round(s.ondo_min, 0) as char) ondo_min" \
+                + " , cast(round(s.ondo_max, 0) as char) ondo_max" \
+                + " , cast(round(s.ondo_avg, 0) as char) ondo_avg" \
+                + " , cast(round(s.shitsudo_min, 0) as char) shitsudo_min" \
+                + " , cast(round(s.shitsudo_max, 0) as char) shitsudo_max" \
+                + " , cast(round(s.shitsudo_avg, 0) as char) shitsudo_avg" \
+                + " , cast(round(s.kiatsu_min, 2) as char) kiatsu_min" \
+                + " , cast(round(s.kiatsu_max, 2) as char) kiatsu_max" \
+                + " , cast(round(s.kiatsu_avg, 2) as char) kiatsu_avg" \
+                + " , cast(round(s.uvindex_min, 1) as char) uvindex_min" \
+                + " , cast(round(s.uvindex_max, 1) as char) uvindex_max" \
+                + " , cast(round(s.uvindex_avg, 1) as char) uvindex_avg" \
+                + " , cast(round(s.lux_min, 0) as char) lux_min" \
+                + " , cast(round(s.lux_max, 0) as char) lux_max" \
+                + " , cast(round(s.lux_avg, 0) as char) lux_avg" \
+                + " , cast(round(s.koudo_min, 0) as char) koudo_min" \
+                + " , cast(round(s.koudo_max, 0) as char) koudo_max" \
+                + " , s.gpsdate_from" \
+                + " , s.gpsdate_to" \
+                + " from" \
+                + "   summary_places s" \
+                + " where s.gpsymd = %s"
+            if not start_time == "":
+                cmd += " and   s.start_time = '" + start_time + "'"
+            cmd += " order by" \
+                +  "   s.start_time"
+            cur.execute(cmd, (ymd,))
+            for row in cur.fetchall():
+                yield row
+
+
+    def fill_gpsdata(self, gpsdate_from, gpsdate_to):
+
+        self._open_connect()
+
+        with self.conn.cursor() as cur:
+            cmd = " SELECT * FROM gpsdata"  \
+                + " WHERE gpsdate >= %s and gpsdate <= %s" \
+                + " AND   ido > 0.0" \
+                + " ORDER BY" \
+                + "   gpsdate"
+            cur.execute(cmd, (gpsdate_from, gpsdate_to,))
+            for row in cur.fetchall():
+                yield row
+
+
+
+
+
 
     def fill_summary_of_month(self, iMonth, iKeyword):
         """
@@ -222,8 +281,7 @@ class Sugegasakun(object):
                 yield row
         finally:
             cur.close()
-
-
+    
     def fill_summary_of_md_range(self, iMdFrom, iMdTo, iKeyword):
         """
         """
@@ -253,7 +311,6 @@ class Sugegasakun(object):
         finally:
             cur.close()
 
-
     def fill_summary_of_gpsdate_from(self, iGpsdateFrom):
         """
         """
@@ -276,7 +333,6 @@ class Sugegasakun(object):
                 yield row
         finally:
             cur.close()
-
 
     def fill_gps_gpsdate_range(self, iDatetimeFrom, iDatetimeTo):
         """

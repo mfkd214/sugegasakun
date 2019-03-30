@@ -29,7 +29,13 @@
         </tr>
         {% for rec in records %}
         <tr>
-            <td><a href='/trace/{{ rec["gpsymd"] }}'>{{ rec["gpsymd"] }}</a></td>
+            <td>
+            {% if rec["basho_nm"] == None %}
+                <span>{{ rec["gpsymd"] }}</span>
+            {% else %}
+                <a href='/trace/{{ rec["gpsymd"] }}'>{{ rec["gpsymd"] }}</a>
+            {% end %}
+            </td>
             <td>{{ rec["start_time"] }}〜{{ rec["ended_time"] }}</td>
             <td>{{ rec["basho_nm"] }}</th>
             <td style="text-align: right;">{{ rec["ondo_avg"] }} ℃</td>

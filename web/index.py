@@ -50,7 +50,23 @@ class BaseHandler(tornado.web.RequestHandler):
             cnt += 1
             self.basho = arg[0]
 
+
         return cnt
+
+
+    def generate_trace(self, ymd, start_time):
+
+        gpsdate_from = ""
+        gpsdate_to = ""
+        trace = ""
+        for rec in self.application.db.fill_summary_places(ymd, start_time):
+            if gpsdate_from == "":
+                gpsdate_from = rec["gpsdate_from"]
+                gpsdate_to = rec["gpsdate_to"]
+        for rec in self.application.db.fill_gpsdata(gpsdate_from, gpsdate_to):
+            trace += "|{0},{1}".format(rec["ido"], rec["keido"])
+
+        return trace
 
 
 
@@ -117,26 +133,53 @@ class SummaryHandler(BaseHandler):
                     year = self.year,
                     month = self.month,
                     day = self.day,
-                    graph_val_kb = self.graph_val_kb)
+                    graph_val_kb = self.graph_val_kb)        
 
 
 
 class TraceHandler(BaseHandler):
     def get(self, ymd):
+        
+        records = self.application.db.fill_summary_places(ymd, "")
+
         zoom = 14
-        size = "640x480"
+        size = "{0}x{1}".format("640", "480")
         scale = 1
         maptype = "terrain"
-        path = "color:0x000ff|weight:5"
-        apikey = config.GMAP_APIKEY
+        path = "color:0x0000ff|weight:5" + self.generate_trace(ymd, "")
+        key = config.GMAP_APIKEY
+
         self.render("trace.html",
+                    records = records,
                     zoom = zoom,
                     size = size,
                     scale = scale,
                     maptype = maptype,
                     path = path,
-                    key = apikey)
+                    key = key)
 
+
+
+class Trace2Handler(BaseHandler):
+    def get(self, ymd, start_time):
+
+        records = self.application.db.fill_summary_places(ymd, "")
+
+        zoom = 14
+        size = "{0}x{1}".format("640", "480")
+        scale = 1
+        maptype = "terrain"
+        path = "color:0x0000ff|weight:5" + self.generate_trace(ymd, start_time)
+        key = config.GMAP_APIKEY
+
+        self.render("trace.html",
+                    records = records,
+                    zoom = zoom,
+                    size = size,
+                    scale = scale,
+                    maptype = maptype,
+                    path = path,
+                    key = key)
 
 
 class Application(tornado.web.Application):
@@ -148,6 +191,7 @@ class Application(tornado.web.Application):
             (r"/where", WhereHandler),
             (r"/when", WhenHandler),
             (r"/summary", SummaryHandler),
+            (r"/trace/(.*)/(.*)", Trace2Handler),
             (r"/trace/(.*)", TraceHandler),
         ]
         settings = dict(
