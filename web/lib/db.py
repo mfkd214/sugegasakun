@@ -248,118 +248,32 @@ class Sugegasakun(object):
                 yield row
 
 
+    def fill_graph_data(self, gpsdate_from, gpsdate_to):
 
+        self._open_connect()
 
-
-
-    def fill_summary_of_month(self, iMonth, iKeyword):
-        """
-        """
-        cur = self.conn.cursor()
-        try:
-            cmd = " select" \
-                + "   gpsdate" \
-                + " , gpsdate_from" \
-                + " , gpsdate_to" \
-                + " , basho_nm" \
-                + " , start_koudo" \
-                + " , avg_ondo" \
-                + " , avg_shitsudo" \
-                + " , avg_kiatsu" \
-                + " from" \
-                + "   summary" \
-                + " where 1 = 1"
-            if iMonth != "00":
-                cmd += " and substring(gpsdate, 6, 2) = '%s'" % iMonth
-            if iKeyword != "":
-                cmd += " and basho_nm like '%" + iKeyword + "%'"
-                
-            cmd += " order by" \
-                 + "   substring(gpsdate, 6, 5), gpsdate_from"
-            cur.execute(cmd)
-            for row in cur.fetchall():
-                yield row
-        finally:
-            cur.close()
-    
-    def fill_summary_of_md_range(self, iMdFrom, iMdTo, iKeyword):
-        """
-        """
-        cur = self.conn.cursor()
-        try:
-            cmd = " select" \
-                + "   gpsdate" \
-                + " , gpsdate_from" \
-                + " , gpsdate_to" \
-                + " , basho_nm" \
-                + " , start_koudo" \
-                + " , avg_ondo" \
-                + " , avg_shitsudo" \
-                + " , avg_kiatsu" \
-                + " from" \
-                + "   summary" \
-                + " where substring(gpsdate, 6, 5) >= '%s'" % iMdFrom \
-                + " and   substring(gpsdate, 6, 5) <= '%s'" % iMdTo 
-            if iKeyword != "":
-                cmd += " and   basho_nm like '%" + iKeyword + "%'"
-                
-            cmd += " order by" \
-                 + "   substring(gpsdate, 6, 5), gpsdate_from"
-            cur.execute(cmd)
-            for row in cur.fetchall():
-                yield row
-        finally:
-            cur.close()
-
-    def fill_summary_of_gpsdate_from(self, iGpsdateFrom):
-        """
-        """
-        cur = self.conn.cursor()
-        try:
-            cmd = " select" \
-                + "   gpsdate" \
-                + " , gpsdate_from" \
-                + " , gpsdate_to" \
-                + " , basho_nm" \
-                + " , start_koudo" \
-                + " , avg_ondo" \
-                + " , avg_shitsudo" \
-                + " , avg_kiatsu" \
-                + " from" \
-                + "   summary" \
-                + " where gpsdate_from = %s"
-            cur.execute(cmd, (iGpsdateFrom,))
-            for row in cur.fetchall():
-                yield row
-        finally:
-            cur.close()
-
-    def fill_gps_gpsdate_range(self, iDatetimeFrom, iDatetimeTo):
-        """
-        """
-        cur = self.conn.cursor()
-        try:
-            cmd = " select" \
+        with self.conn.cursor() as cur:
+            cmd = " SELECT" \
                 + "   g.filename" \
                 + " , g.gpsdate" \
-                + " , g.ido" \
-                + " , g.keido" \
-                + " , g.koudo" \
-                + " , ifnull(f.ondo, 0.0)" \
-                + " , ifnull(f.shitsudo, 0.0)" \
-                + " , ifnull(f.kiatsu, 0.0)" \
-                + " from" \
+                + " , round(ifnull(g.koudo,    0.0), 0) koudo" \
+                + " , round(ifnull(f.ondo,     0.0), 0) ondo" \
+                + " , round(ifnull(f.shitsudo, 0.0), 0) shitsudo" \
+                + " , round(ifnull(f.kiatsu,   0.0), 2) kiatsu" \
+                + " , round(ifnull(u.uvindex,  0.0), 0) uvindex" \
+                + " , round(ifnull(l.lux,      0.0), 0) lux" \
+                + " FROM" \
                 + "   gpsdata g" \
                 + " left join fielddata f" \
                 + "   on f.filename = g.filename" \
-                + " where g.gpsdate >= %s" \
-                + " and   g.gpsdate <= %s" \
-                + " and   g.ido > 0.0" \
-                + " order by" \
-                + "   g.gpsdate"
-            cur.execute(cmd, (iDatetimeFrom, iDatetimeTo,))
+                + " left join uvindexdata u" \
+                + "   on u.filename = g.filename" \
+                + " left join luxdata l" \
+                + "   on l.filename = g.filename" \
+                + " WHERE gpsdate >= %s" \
+                + " AND   gpsdate <= %s" \
+                + " ORDER BY" \
+                + "   gpsdate"
+            cur.execute(cmd, (gpsdate_from, gpsdate_to,))
             for row in cur.fetchall():
                 yield row
-        finally:
-            cur.close()
-

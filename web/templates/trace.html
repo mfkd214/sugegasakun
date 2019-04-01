@@ -16,29 +16,100 @@
           <th>日付</th>
           <th>時間帯</th>
           <th>場所</th>
-          <th style="text-align: right;">気温</th>
-          <th style="text-align: right;">湿度</th>
-          <th style="text-align: right;">気圧</th>
-          <th style="text-align: right;">UV INDEX</th>
-          <th style="text-align: right;">明るさ</th>
+          <th style="text-align: center;">気温</th>
+          <th style="text-align: center;">湿度</th>
+          <th style="text-align: center;">気圧</th>
+          <th style="text-align: center;">UV INDEX</th>
+          <th style="text-align: center;">明るさ</th>
       </tr>
       {% for rec in records %}
       <tr>
           <td><a href='/trace/{{ rec["gpsymd"] }}/{{ rec["start_time"] }}'>{{ rec["gpsymd"] }}</a></td>
           <td>{{ rec["start_time"] }}〜{{ rec["ended_time"] }}</td>
-          <td>{{ rec["basho_nm"] }}</th>
-          <td style="text-align: right;">{{ rec["ondo_avg"] }} ℃</td>
-          <td style="text-align: right;">{{ rec["shitsudo_avg"] }} %</td>
-          <td style="text-align: right;">{{ rec["kiatsu_avg"] }} hpa</td>
-          <td style="text-align: right;">{{ rec["uvindex_avg"] }}</td>
-          <td style="text-align: right;">{{ rec["lux_avg"] }} lux</td>
+          <td>{{ rec["basho_nm"] }}<br />{{ rec["koudo_min"] }} m 〜 {{ rec["koudo_max"] }} m</th>
+          <td style="text-align: center;">平均：{{ rec["ondo_avg"] }} ℃<br />{{ rec["ondo_min"] }} ℃ 〜 {{ rec["ondo_max"] }} ℃</td>
+          <td style="text-align: center;">平均：{{ rec["shitsudo_avg"] }} %<br />{{ rec["shitsudo_min"] }} % 〜 {{ rec["shitsudo_max"] }} %</td>
+          <td style="text-align: center;">平均：{{ rec["kiatsu_avg"] }} hpa<br />{{ rec["kiatsu_min"] }} hpa 〜 {{ rec["kiatsu_max"] }} hpa</td>
+          <td style="text-align: center;">平均：{{ rec["uvindex_avg"] }}<br />{{ rec["uvindex_min"] }} 〜 {{ rec["uvindex_max"] }}</td>
+          <td style="text-align: center;">平均：{{ rec["lux_avg"] }} lux<br />{{ rec["lux_min"] }} lux 〜 {{ rec["lux_max"] }} lux</td>
       </tr>
       {% end %}
     </table>
   </div>
   <div class="row" style="margin-left:2px;margin-right:2px;">
-    <img src="https://maps.googleapis.com/maps/api/staticmap?size={{ size }}&scale={{ scale }}&maptype={{ maptype }}&path={{ path }}&key={{ key }}" />
-  </div>  
-</div>
+    <div class="col-xs-6">
+      <div class="row">
+        <img src="https://maps.googleapis.com/maps/api/staticmap?size={{ size }}&scale={{ scale }}&maptype={{ maptype }}&path={{ path }}&key={{ key }}" />
+      </div>
+    </div>  
+    <div class="col-xs-6">
+      <div class="row" style="margin-left:2px;">
+        <div id="koudo_chart_div"></div>
+        <div id="ondo_chart_div"></div>
+        <div id="shitsudo_chart_div"></div>
+        <div id="kiatsu_chart_div"></div>
+        <script type="text/javascript"src="https://www.gstatic.com/charts/loader.js"></script>
+        <script>
+          google.charts.load('current', {packages: ['corechart', 'line']});
+          google.charts.setOnLoadCallback(drawBackgroundColor);
+          
+          function drawBackgroundColor() {
+
+            // 標高
+            var koudo_dt = new google.visualization.DataTable();
+            koudo_dt.addColumn('date', 'time');
+            koudo_dt.addColumn('number', 'm');
+            koudo_dt.addRows([
+              {% for r in grp_koudos %}
+               [ new Date({{ r[0] }}, {{ r[1] }} , {{ r[2] }}, {{ r[3] }}, {{ r[4] }}, 0), {{ r[5] }}],
+              {% end %}
+            ]);
+            var koudo_options = {vAxis: {title: '標高'}, backgroundColor: '#f1f8e9'};
+            var koudo_chart = new google.visualization.LineChart(document.getElementById('koudo_chart_div'));
+            koudo_chart.draw(koudo_dt, koudo_options);
+
+            // 温度
+            var ondo_dt = new google.visualization.DataTable();
+            ondo_dt.addColumn('date', 'time');
+            ondo_dt.addColumn('number', '℃');
+            ondo_dt.addRows([
+              {% for r in grp_ondos %}
+              [ new Date({{ r[0] }}, {{ r[1] }} , {{ r[2] }}, {{ r[3] }}, {{ r[4] }}, 0), {{ r[5] }}],
+              {% end %}
+            ]);
+            var ondo_options = {vAxis: {title: '温度'}, backgroundColor: '#f1f8e9'};
+            var ondo_chart = new google.visualization.LineChart(document.getElementById('ondo_chart_div'));
+            ondo_chart.draw(ondo_dt, ondo_options);
+
+            // 温度
+            var shitsudo_dt = new google.visualization.DataTable();
+            shitsudo_dt.addColumn('date', 'time');
+            shitsudo_dt.addColumn('number', '%');
+            shitsudo_dt.addRows([
+              {% for r in grp_shitsudos %}
+              [ new Date({{ r[0] }}, {{ r[1] }} , {{ r[2] }}, {{ r[3] }}, {{ r[4] }}, 0), {{ r[5] }}],
+              {% end %}
+            ]);
+            var shitsudo_options = {vAxis: {title: '湿度'}, backgroundColor: '#f1f8e9'};
+            var shitsudo_chart = new google.visualization.LineChart(document.getElementById('shitsudo_chart_div'));
+            shitsudo_chart.draw(shitsudo_dt, shitsudo_options);
+
+            // 気圧
+            var kiatsu_dt = new google.visualization.DataTable();
+            kiatsu_dt.addColumn('date', 'time');
+            kiatsu_dt.addColumn('number', 'hpa');
+            kiatsu_dt.addRows([
+              {% for r in gps_kiatsus %}
+              [ new Date({{ r[0] }}, {{ r[1] }} , {{ r[2] }}, {{ r[3] }}, {{ r[4] }}, 0), {{ r[5] }}],
+              {% end %}
+            ]);
+            var kiatsu_options = {vAxis: {title: '気圧'}, backgroundColor: '#f1f8e9'};
+            var kiatsu_chart = new google.visualization.LineChart(document.getElementById('kiatsu_chart_div'));
+            kiatsu_chart.draw(kiatsu_dt, kiatsu_options);
+          }
+        </script>
+      </div>
+    </div>  
+  </div>
 {% end %} 
 
