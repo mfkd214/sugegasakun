@@ -36,3 +36,4 @@ web/lib/tests/__pycache__/test_db.cpython-36.pyc
 tools/lib/config.py
 web/config.py
 web/sugegasakun.sqlite
+var/sugegasakun.sqlite

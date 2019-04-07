@@ -1,151 +1,190 @@
-#! /usr/bin/python3
-# -*- coding: utf-8 -*-
 import os
-from lib import db, gpsfile, fieldfile, uvindexfile, luxfile, gmaps, summary
-
-class Impoter(object):
-
-    def __init__(self, is_local):
-        self.db = db.Sugegasakun(is_local)
-
-
-    def _cut_extention(self, filename):
-        """
-        """
-        tmp = filename.split(".")
-        return tmp[0]
-
-
-    def import_datas(self, data_dir):
-        """
-        """
-        if not os.path.exists(data_dir):
-            print("path not found", data_dir)
-            return 4
-
-        for f in os.listdir(data_dir):
-            filename = os.path.join(data_dir, f)
-            if not os.path.isfile(filename):
-                continue
-
-            if f.find("gps.txt") >= 0:
-                gps = gpsfile.Gpsfile(filename)
-                if gps.jst != None:
-                    self.db.import_gpsdata(
-                                    self._cut_extention(f),
-                                    gps.jst,
-                                    gps.ido,
-                                    gps.keido,
-                                    gps.koudo)
-                    self.db.commit()
-                
-            elif f.find("field.txt") >= 0:
-                field = fieldfile.Fieldfile(filename)
-                if field.ondo > 0.0 and field.shitsudo > 0.0 and field.kiatsu > 0.0:
-                    self.db.import_fielddata(
-                                    self._cut_extention(f),
-                                    field.ondo,
-                                    field.shitsudo,
-                                    field.kiatsu)
-                    self.db.commit()
-
-            elif f.find("uvindex.txt") >= 0:
-                uvindex = uvindexfile.UVIndexfile(filename)
-                if uvindex.uv_index > 0.0 and uvindex.vis > 0.0 and uvindex.ir > 0.0:
-                    self.db.import_uvindexdata(
-                                    self._cut_extention(f),
-                                    uvindex.uv_index,
-                                    uvindex.vis,
-                                    uvindex.ir)
-                    self.db.commit()
-
-            elif f.find("lux.txt") >= 0:
-                lux = luxfile.Luxfile(filename)
-                if lux.lux > 0.0 and lux.full > 0.0 and lux.ir > 0.0:
-                    self.db.import_luxdata(
-                                    self._cut_extention(f),
-                                    lux.lux,
-                                    lux.full,
-                                    lux.ir)
-                    self.db.commit()
+import math
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+import sqlite3
+from lib import gpsfile, fieldfile, uvindexfile, luxfile, summary, gmaps, config
+from lib import db as database
+################################################################################
+#   importer.py
+#   各ファイルからDBに突っ込む
+#
+#   2019.04.--  mfkd    ThreadPoolExecutorを使用するように修正
+#   2019.--.--  mfkd    new
+################################################################################
+def _cut_extention(fullpath):
+    bn = os.path.basename(fullpath)
+    tmp_l = bn.split(".")
+    return tmp_l[0]
 
 
-            else:
-                continue
+def import_gps(filename):
 
-        self.db.import_filename_gpsdata()
-        self.db.patch_filename_gpsdata()
-        self.db.commit()
+    try:
+        gps = gpsfile.Gpsfile(filename)
+        if gps.jst == None:
+            return 1
+
+        fn = _cut_extention(filename)
+        with database.Sugegasakun(config.LOCALDB) as d:
+            d.import_gpsdata(fn, gps.jst, gps.ido, gps.keido, gps.koudo)
+            d.commit()
+        return 0
+    except:
+        print(filename)
+        return 4
 
 
-    def create_summary(self):
-        """
-        """
-        self.db.delete_summary()
-        self.db.commit()
+def import_field(filename):
+
+    try:
+        field = fieldfile.Fieldfile(filename)
+        if field.ondo > 0.0 and field.shitsudo > 0.0 and field.kiatsu > 0.0:
+            pass
+        else:
+            return 1
+
+        fn = _cut_extention(filename)
+        with database.Sugegasakun(config.LOCALDB) as d:
+            d.import_fielddata(fn, field.ondo, field.shitsudo, field.kiatsu)
+            d.commit()
+        return 0
+    except:
+        print(filename)
+        return 4
+
+
+def import_uvindex(filename):
+
+    try:
+        uv = uvindexfile.UVIndexfile(filename)
+        if uv.uv_index > 0.0 and uv.vis > 0.0 and uv.ir > 0.0:
+            pass
+        else:
+            return 1
+
+        fn = _cut_extention(filename)
+        with database.Sugegasakun(config.LOCALDB) as d:
+            d.import_uvindexdata(fn, uv.uv_index, uv.vis, uv.vis)
+            d.commit()
+        return 0
+
+    except:
+        print(filename)
+        return 4
+    
+
+def import_lux(filename):
+
+    try:
+        lux = luxfile.Luxfile(filename)
+        if lux.lux > 0.0 and lux.full > 0.0 and lux.ir > 0.0:
+            pass
+        else:
+            return 1
+
+        fn = _cut_extention(filename)
+        with database.Sugegasakun(IS_LOCALDB) as d:
+            d.import_luxdata(fn, lux.lux, lux.full, lux.ir)
+            d.commit()
+        return 0
+
+    except:
+        print(filename)
+        return 4
+
+
+def import_files(filename):
+
+    if filename.find("gps.txt") >= 0:
+        import_gps(filename)
+
+    elif filename.find("field.txt") >= 0:
+        import_field(filename)
+
+    elif filename.find("uvindex.txt") >= 0:
+        import_uvindex(filename)
+
+    elif filename.find("lux.txt") >= 0:
+        import_lux(filename)
+
+    else:
+        pass
+    
+
+def generate_summary(gps_ymd):
+
+    with database.Sugegasakun(config.LOCALDB) as d:
+
+        smry = summary.Summary(gps_ymd)
+
+        # 日付に一致する各種データを取得
+        for rec in d.fill_all_datas_gpsymd(gps_ymd):
+            smry.stack(rec)
+
+        # 追加
+        d.import_summary(
+                gps_ymd,
+                smry.start_time,
+                smry.ended_time,
+                smry.avgondo_per_day(),
+                smry.minondo_per_day(),
+                smry.maxondo_per_day(),
+                smry.avgshitsudo_per_day(),
+                smry.minshitsudo_per_day(),
+                smry.maxshitsudo_per_day(),
+                smry.avgkiatsu_per_day(),
+                smry.minkiatsu_per_day(),
+                smry.maxkiatsu_per_day(),
+                smry.avguvindex_per_day(),
+                smry.minuvindex_per_day(),
+                smry.maxuvindex_per_day(),
+                smry.avglux_per_day(),
+                smry.minlux_per_day(),
+                smry.maxlux_per_day(), 
+                smry.minkoudo_per_day(),
+                smry.maxkoudo_per_day())
+
+        d.commit()
+
+
+def _is_long_distance(pre_datetime, pre_ido, pre_keido, now_datetime, ido, keido):
+    """ 直前の緯度、経度から離れている場合、違う場所と判定する。
+        （ちなみに、緯度が0.01差がある場合、1.11km離れている。経度は緯度による可変値)
+        緯度差、経度差の斜辺値を元に同一場所判定する。とりあえず時間軸は考慮しない。
+    """
+    ido_sa = abs(pre_ido - ido)
+    keido_sa = abs(pre_keido - keido)
+
+    expo_ido_sa = ido_sa ** 2
+    expo_keido_sa = keido_sa ** 2
+
+    heihokon = math.sqrt(expo_ido_sa + expo_keido_sa)
+    heihokon *= 1000
+
+    # 斜辺が10.0の根拠はなし。実績値ベースでなんとなくな値。
+    if heihokon > 10.0:
+        return True
+    return False
+
+
+def generate_summary_place():
+    """
+    """
+
+    maps = gmaps.Gmaps()
+    start_points = list()
+
+    with database.Sugegasakun(config.LOCALDB) as d:
 
         # 日付取得
-        for ymd in self.db.get_date():
-
-            smry = summary.Summary(ymd["gps_ymd"])
-
-            # 日付に一致する各種データを取得
-            for rec in self.db.fill_all_datas_gpsymd(ymd["gps_ymd"]):
-
-                smry.stack(rec)
-
-            # 追加
-            self.db.import_summary(
-                        ymd["gps_ymd"],
-                        smry.start_time,
-                        smry.ended_time,
-                        smry.avgondo_per_day(),
-                        smry.minondo_per_day(),
-                        smry.maxondo_per_day(),
-                        smry.avgshitsudo_per_day(),
-                        smry.minshitsudo_per_day(),
-                        smry.maxshitsudo_per_day(),
-                        smry.avgkiatsu_per_day(),
-                        smry.minkiatsu_per_day(),
-                        smry.maxkiatsu_per_day(),
-                        smry.avguvindex_per_day(),
-                        smry.minuvindex_per_day(),
-                        smry.maxuvindex_per_day(),
-                        smry.avglux_per_day(),
-                        smry.minlux_per_day(),
-                        smry.maxlux_per_day(), 
-                        smry.minkoudo_per_day(),
-                        smry.maxkoudo_per_day())
-            self.db.commit()
-
-
-    def _is_long_distance(self, pre_datetime, pre_ido, pre_keido, now_datetime, ido, keido):
-        """ 直前の緯度、経度から離れている場合、違う場所と判定する
-            緯度が0.01差がある(1.11km離れている)
-        """
-        sa = pre_ido - ido
-        if abs(sa) > 0.01:
-            return True
-        return False
-
-
-    def create_summary_place(self):
-        """
-        """
-        maps = gmaps.Gmaps()
-        start_points = list()
-
-        self.db.delete_summary_place()
-        self.db.commit()
-
-        # 日付取得
-        for ymd in self.db.get_date():
+        for ymd in d.get_date():
 
             # 日付に一致する各種データを取得
             pre_datetime = ""
             pre_ido = 0.0
             pre_keido = 0.0
-            for rec in self.db.fill_all_datas_gpsymd(ymd["gps_ymd"]):
+            for rec in d.fill_all_datas_gpsymd(ymd["gps_ymd"]):
 
                 # 位置情報があるものだけ対象にする
                 if rec["ido"] == 0:
@@ -167,7 +206,7 @@ class Impoter(object):
                     continue
 
                 # 直前のレコードと距離が離れている場合、場所が違うと判定
-                if self._is_long_distance(
+                if _is_long_distance(
                                 pre_datetime, pre_ido, pre_keido,
                                 rec["gpsdate"], rec["ido"], rec["keido"]):
 
@@ -205,50 +244,102 @@ class Impoter(object):
 
             # スタック
             smry = summary.Summary(fr_nichiji[:10])
-            for rec in self.db.fill_all_datas_gpsdate_range(fr_nichiji, to_nichiji):
+            for rec in d.fill_all_datas_gpsdate_range(fr_nichiji, to_nichiji):
                 smry.stack(rec)
 
 
             # 追加
-            self.db.import_summary_place(
-                        smry.gps_ymd,
-                        smry.start_time,
-                        smry.ended_time,
-                        start_point["ido"],
-                        start_point["keido"],
-                        start_point["basho_nm"],
-                        smry.avgondo_per_day(),
-                        smry.minondo_per_day(),
-                        smry.maxondo_per_day(),
-                        smry.avgshitsudo_per_day(),
-                        smry.minshitsudo_per_day(),
-                        smry.maxshitsudo_per_day(),
-                        smry.avgkiatsu_per_day(),
-                        smry.minkiatsu_per_day(),
-                        smry.maxkiatsu_per_day(),
-                        smry.avguvindex_per_day(),
-                        smry.minuvindex_per_day(),
-                        smry.maxuvindex_per_day(),
-                        smry.avglux_per_day(),
-                        smry.minlux_per_day(),
-                        smry.maxlux_per_day(), 
-                        smry.minkoudo_per_day(),
-                        smry.maxkoudo_per_day(),
-                        smry.rows[0]["gpsdate"],
-                        smry.rows[len(smry.rows) - 1]["gpsdate"],
-                        smry.rows[0]["filename"],
-                        smry.rows[len(smry.rows) - 1]["filename"])
-            self.db.commit()
+            d.import_summary_place(
+                    smry.gps_ymd,
+                    smry.start_time,
+                    smry.ended_time,
+                    start_point["ido"],
+                    start_point["keido"],
+                    start_point["basho_nm"],
+                    smry.avgondo_per_day(),
+                    smry.minondo_per_day(),
+                    smry.maxondo_per_day(),
+                    smry.avgshitsudo_per_day(),
+                    smry.minshitsudo_per_day(),
+                    smry.maxshitsudo_per_day(),
+                    smry.avgkiatsu_per_day(),
+                    smry.minkiatsu_per_day(),
+                    smry.maxkiatsu_per_day(),
+                    smry.avguvindex_per_day(),
+                    smry.minuvindex_per_day(),
+                    smry.maxuvindex_per_day(),
+                    smry.avglux_per_day(),
+                    smry.minlux_per_day(),
+                    smry.maxlux_per_day(), 
+                    smry.minkoudo_per_day(),
+                    smry.maxkoudo_per_day(),
+                    smry.rows[0]["gpsdate"],
+                    smry.rows[len(smry.rows) - 1]["gpsdate"],
+                    smry.rows[0]["filename"],
+                    smry.rows[len(smry.rows) - 1]["filename"])
+            d.commit()
+
+
+
+def main():
+
+    # files
+    #---------------------------------------------------------------------------
+    print(datetime.now(), "start import files...")
+    max_worker = 4
+    with ThreadPoolExecutor(max_workers=max_worker) as executor:
+
+        for f in os.listdir(config.DATA_DIR):
+
+            filename = os.path.join(config.DATA_DIR, f)
+            if not os.path.isfile(filename):
+                continue
+
+            executor.submit(import_files, filename)
+
+    print(datetime.now(), "done!")
+
+
+    # filename_gpsdata
+    #---------------------------------------------------------------------------
+    print(datetime.now(), "start generate filename_gpsdata...")
+    with database.Sugegasakun(config.LOCALDB) as d:
+
+        d.import_filename_gpsdata()
+        d.patch_filename_gpsdata()
+
+    print(datetime.now(), "done!")
+
+
+    # summary
+    #---------------------------------------------------------------------------
+    print(datetime.now(), "start generate summary...")
+    with database.Sugegasakun(config.LOCALDB) as d:
+        d.delete_summary()
+        d.commit()
+
+        max_worker = 4
+        with ThreadPoolExecutor(max_workers=max_worker) as executor:
+
+            for ymd in d.get_date():
+    
+                executor.submit(generate_summary, ymd["gps_ymd"])
+
+    print(datetime.now(), "done!")
+
+
+    # generate_summary_places
+    #---------------------------------------------------------------------------
+    print(datetime.now(), "start generate summary_places...")
+    with database.Sugegasakun(config.LOCALDB) as d:
+
+        d.delete_summary_place()
+        d.commit()
+
+    generate_summary_place()
+    print(datetime.now(), "done!")
 
 
 
 if __name__ == "__main__":
-    import lib.config as config
-
-    imp = Impoter(False)
-
-    imp.import_datas(config.DATA_DIR)
-
-    imp.create_summary()
-
-    imp.create_summary_place()
+    main()

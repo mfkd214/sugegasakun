@@ -1,13 +1,19 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+import os
 import pymysql.cursors
+import sqlite3
 import lib.config as config
 
 class Sugegasakun(object):
 
-    def __init__(self, is_local=False):
+    def __init__(self, localdb_path):
 
-        if not is_local:
+        self.is_local = True
+        if localdb_path == "":
+            self.is_local = False
+
+        if not self.is_local:
             # MySQL
             DB      = config.DB
             HOST    = config.HOST
@@ -22,6 +28,19 @@ class Sugegasakun(object):
                             passwd=PWD,
                             charset=CHARSET,
                             cursorclass=pymysql.cursors.DictCursor)
+        else:
+            self.conn = sqlite3.connect(localdb_path)
+            self.conn.row_factory = sqlite3.Row
+
+
+    def __enter__(self):
+        return self
+
+
+    def __exit__(self, ex_type, ex_value, trace):
+        """
+        """
+        self.conn.rollback()
 
 
     def __del__(self):
@@ -29,6 +48,7 @@ class Sugegasakun(object):
         """
         self.conn.rollback()
         self.conn.close()
+
 
 
     def commit(self):
@@ -48,10 +68,11 @@ class Sugegasakun(object):
         cur = self.conn.cursor()
         try:
             cmd = "delete from gpsdata" \
-                + " where filename = %s" \
-                + " and   gpsdate  = %s"
-            cur.execute(cmd, (filename, gpsdate, ))
-            
+                + " where filename = '%s'" \
+                + " and   gpsdate  = '%s'"
+            cmd = cmd % (filename, gpsdate)
+            cur.execute(cmd)
+
             cur = self.conn.cursor()
             cmd = "INSERT INTO gpsdata" \
                 + "( filename" \
@@ -60,13 +81,14 @@ class Sugegasakun(object):
                 + ", keido" \
                 + ", koudo" \
                 + ") VALUES (" \
-                + "  %s" \
-                + ", %s" \
+                + "  '%s'" \
+                + ", '%s'" \
                 + ", %s" \
                 + ", %s" \
                 + ", %s" \
                 + ")"
-            cur.execute(cmd, (filename, gpsdate, ido, keido, koudo,))
+            cmd = cmd % (filename, gpsdate, ido, keido, koudo)
+            cur.execute(cmd)
         finally:
             cur.close()
 
@@ -76,9 +98,11 @@ class Sugegasakun(object):
         cur = self.conn.cursor()
         try:
             cmd = "delete from fielddata" \
-                + " where filename = %s"
-            cur.execute(cmd, (filename, ))
-            
+                + " where filename = '%s'"
+            cmd = cmd % (filename)
+            cur.execute(cmd)
+
+
             cur = self.conn.cursor()
             cmd = "INSERT INTO fielddata" \
                 + "( filename" \
@@ -86,12 +110,14 @@ class Sugegasakun(object):
                 + ", shitsudo" \
                 + ", kiatsu" \
                 + ") VALUES (" \
-                + "  %s" \
+                + "  '%s'" \
                 + ", %s" \
                 + ", %s" \
                 + ", %s" \
                 + ")"
-            cur.execute(cmd, (filename, ondo, shitsudo, kiatsu,))
+
+            cmd = cmd % (filename, ondo, shitsudo, kiatsu)
+            cur.execute(cmd)
         finally:
             cur.close()
 
@@ -101,9 +127,11 @@ class Sugegasakun(object):
         cur = self.conn.cursor()
         try:
             cmd = "delete from uvindexdata" \
-                + " where filename = %s"
-            cur.execute(cmd, (filename, ))
+                + " where filename = '%s'"
+            cmd = cmd % (filename)
+            cur.execute(cmd)
             
+
             cur = self.conn.cursor()
             cmd = "INSERT INTO uvindexdata" \
                 + "( filename" \
@@ -111,12 +139,13 @@ class Sugegasakun(object):
                 + ", vis" \
                 + ", ir" \
                 + ") VALUES (" \
-                + "  %s" \
+                + "  '%s'" \
                 + ", %s" \
                 + ", %s" \
                 + ", %s" \
                 + ")"
-            cur.execute(cmd, (filename, uvindex, vis, ir,))
+            cmd = cmd % (filename, uvindex, vis, ir)
+            cur.execute(cmd)
         finally:
             cur.close()
 
@@ -125,9 +154,11 @@ class Sugegasakun(object):
         cur = self.conn.cursor()
         try:
             cmd = "delete from luxdata" \
-                + " where filename = %s"
-            cur.execute(cmd, (filename, ))
-            
+                + " where filename = '%s'"
+            cmd = cmd % (filename)
+            cur.execute(cmd)
+
+
             cur = self.conn.cursor()
             cmd = "INSERT INTO luxdata" \
                 + "( filename" \
@@ -135,12 +166,13 @@ class Sugegasakun(object):
                 + ", full" \
                 + ", ir" \
                 + ") VALUES (" \
-                + "  %s" \
+                + "  '%s'" \
                 + ", %s" \
                 + ", %s" \
                 + ", %s" \
                 + ")"
-            cur.execute(cmd, (filename, lux, full, ir,))
+            cmd = cmd % (filename, lux, full, ir)
+            cur.execute(cmd)
         finally:
             cur.close()
 
@@ -198,9 +230,10 @@ class Sugegasakun(object):
 
                 cur = self.conn.cursor()
                 cmd = "update filename_gpsdate " \
-                    + "set gpsdate = %s "  \
-                    + "where filename = %s "
-                cur.execute(cmd, (gpsdate, filename,))
+                    + "set gpsdate = '%s' "  \
+                    + "where filename = '%s' "
+                cmd = cmd % (gpsdate, filename)
+                cur.execute(cmd)
 
             # PATCH.2
             cur = self.conn.cursor()
@@ -231,13 +264,21 @@ class Sugegasakun(object):
     def get_date(self):
         cur = self.conn.cursor()
         try:
-            cmd = " SELECT distinct " \
-                + "   substring(gpsdate, 1, 10) gps_ymd " \
-                + " FROM " \
-                + "   filename_gpsdate " \
-                + " WHERE gpsdate is not null" \
-                + " ORDER BY " \
-                + "   substring(gpsdate, 1, 10)"
+            cmd = " SELECT distinct "
+            if self.is_local:
+                cmd += "   substr(gpsdate, 1, 10) gps_ymd "
+            else: 
+                cmd += "   substring(gpsdate, 1, 10) gps_ymd "
+            
+            cmd += " FROM " \
+                +  "   filename_gpsdate " \
+                +  " WHERE gpsdate is not null" \
+                +  " ORDER BY "
+            if self.is_local:
+                cmd += "   substr(gpsdate, 1, 10)"
+            else:
+                cmd += "   substring(gpsdate, 1, 10)"
+
             cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
@@ -258,9 +299,13 @@ class Sugegasakun(object):
                 + " , ifnull(fi.shitsudo, 0.0) shitsudo" \
                 + " , ifnull(fi.kiatsu, 0.0) kiatsu" \
                 + " , ifnull(uv.uvindex, 0.0) uvindex" \
-                + " , ifnull(lx.lux, 0.0) lux" \
-                + " , substring(fg.gpsdate, 1, 10) gps_ymd" \
-                + " from" \
+                + " , ifnull(lx.lux, 0.0) lux"
+            if self.is_local:
+                cmd += " , substr(fg.gpsdate, 1, 10) gps_ymd"
+            else:
+                cmd += " , substring(fg.gpsdate, 1, 10) gps_ymd"
+
+            cmd += " from" \
                 + "  filename_gpsdate fg" \
                 + " left join gpsdata gps" \
                 + "   on gps.filename = fg.filename" \
@@ -270,11 +315,16 @@ class Sugegasakun(object):
                 + "   on uv.filename = fg.filename" \
                 + " left outer join luxdata lx" \
                 + "   on lx.filename = fg.filename" \
-                + " where fg.gpsdate is not null" \
-                + " and   substring(fg.gpsdate, 1, 10) = %s " \
-                + " order by" \
-                + "   fg.gpsdate" 
-            cur.execute(cmd, (ymd,))
+                + " where fg.gpsdate is not null"
+            if self.is_local:
+                cmd += " and   substr(fg.gpsdate, 1, 10) = '%s' "
+            else:
+                cmd += " and   substring(fg.gpsdate, 1, 10) = '%s' "
+            cmd +=  " order by" \
+                +   "   fg.gpsdate" 
+
+            cmd = cmd % ymd
+            cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
         finally:
@@ -302,7 +352,7 @@ class Sugegasakun(object):
                 + ", lux_avg, lux_min, lux_max" \
                 + ", koudo_min, koudo_max" \
                 + ") VALUES (" \
-                + "  %s, %s, %s" \
+                + "  '%s', '%s', '%s'" \
                 + ", %s, %s, %s" \
                 + ", %s, %s, %s" \
                 + ", %s, %s, %s" \
@@ -310,14 +360,15 @@ class Sugegasakun(object):
                 + ", %s, %s, %s" \
                 + ", %s, %s" \
                 + ")"
-            cur.execute(cmd, (
+            cmd = cmd % (
                     gps_ymd, start_time, ended_time,
                     ondo_per_day, minondo_per_day, maxondo_per_day,
                     shitsudo_per_day, minshitsudo_per_day, maxshitsudo_per_day,
                     kiatsu_per_day, minkiatsu_per_day, maxkiatsu_per_day,
                     uxindex_per_day, minuvindex_per_day, maxuvindex_per_day,
                     lux_per_day, minlux_per_day, maxlux_per_day, 
-                    minkoudo_per_day, maxkoudo_per_day,))
+                    minkoudo_per_day, maxkoudo_per_day,)
+            cur.execute(cmd)
         finally:
             cur.close()
 
