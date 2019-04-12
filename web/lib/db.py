@@ -77,16 +77,22 @@ class Sugegasakun(object):
             + " , cast(round(s.lux_max, 0) as char) lux_max" \
             + " , cast(round(s.lux_avg, 0) as char) lux_avg" \
             + " , cast(round(s.koudo_min, 0) as char) koudo_min" \
-            + " , cast(round(s.koudo_max, 0) as char) koudo_max" \
-            + " , if (g.cnt = 1, g.basho_nm, concat(g.basho_nm, ' 等')) basho_nm" \
-            + " from" \
-            + "   summary s" \
-            + " left outer join (" \
-            + "   select gpsymd, MAX(basho_nm) basho_nm, count(*) cnt" \
-            + "   from summary_places" \
-            + "   group by gpsymd" \
-            + " ) g" \
-            + "   on g.gpsymd = s.gpsymd" \
+            + " , cast(round(s.koudo_max, 0) as char) koudo_max"
+        if self.is_local:
+            cmd += " , case" \
+                +  "     when g.cnt = 1 then g.basho_nm" \
+                +  "     else g.basho_nm || ' 等'" \
+                +  "   end basho_nm"
+        else:
+            cmd += " , if (g.cnt = 1, g.basho_nm, concat(g.basho_nm, ' 等')) basho_nm"
+        cmd += " from" \
+            +  "   summary s" \
+            +  " left outer join (" \
+            +  "   select gpsymd, MAX(basho_nm) basho_nm, count(*) cnt" \
+            +  "   from summary_places" \
+            +  "   group by gpsymd" \
+            +  " ) g" \
+            +  "   on g.gpsymd = s.gpsymd" \
 
         return cmd
 
@@ -95,8 +101,8 @@ class Sugegasakun(object):
         """
         """
         self._open_connect()
-
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = self._listing_sql() \
                 + " ORDER by" \
                 + "   s.gpsymd DESC" \
@@ -104,6 +110,8 @@ class Sugegasakun(object):
             cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
 
 
     def fill_where_year_month(self, year, month):
@@ -122,7 +130,8 @@ class Sugegasakun(object):
             else:
                 q += month.zfill(2) + "-%"
 
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = self._listing_sql() \
                 + " WHERE s.gpsymd like '" + q + "'" \
                 + " ORDER by" \
@@ -131,6 +140,8 @@ class Sugegasakun(object):
             cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
 
 
     def fill_where_week(self, year, month, day):
@@ -147,7 +158,8 @@ class Sugegasakun(object):
         date_from = df.strftime("%m-%d")
         date_to = dt.strftime("%m-%d")
 
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = self._listing_sql() \
                 + " WHERE substring(s.gpsymd, 6, 10) >= %s" \
                 + " AND   substring(s.gpsymd, 6, 10) <= %s" \
@@ -157,6 +169,8 @@ class Sugegasakun(object):
             cur.execute(cmd, (date_from, date_to,))
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
 
 
     def fill_when(self, basho, year, month):
@@ -175,7 +189,8 @@ class Sugegasakun(object):
             else:
                 q += month.zfill(2) + "-%"
 
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = "SELECT * FROM (" \
                 + self._listing_sql() \
                 + ") x" \
@@ -190,13 +205,16 @@ class Sugegasakun(object):
             cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
 
 
     def fill_summary_places(self, ymd, start_time):
 
         self._open_connect()
 
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = " SELECT" \
                 + "   s.gpsymd" \
                 + " , s.start_time" \
@@ -231,13 +249,16 @@ class Sugegasakun(object):
             cur.execute(cmd, (ymd,))
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
 
 
     def fill_gpsdata(self, gpsdate_from, gpsdate_to):
 
         self._open_connect()
 
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = " SELECT * FROM gpsdata"  \
                 + " WHERE gpsdate >= %s and gpsdate <= %s" \
                 + " AND   ido > 0.0" \
@@ -246,13 +267,16 @@ class Sugegasakun(object):
             cur.execute(cmd, (gpsdate_from, gpsdate_to,))
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
 
 
     def fill_graph_data(self, gpsdate_from, gpsdate_to):
 
         self._open_connect()
 
-        with self.conn.cursor() as cur:
+        cur = self.conn.cursor()
+        try:
             cmd = " SELECT" \
                 + "   g.filename" \
                 + " , g.gpsdate" \
@@ -277,3 +301,5 @@ class Sugegasakun(object):
             cur.execute(cmd, (gpsdate_from, gpsdate_to,))
             for row in cur.fetchall():
                 yield row
+        finally:
+            cur.close()
