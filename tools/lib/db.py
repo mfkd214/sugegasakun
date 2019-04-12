@@ -50,7 +50,6 @@ class Sugegasakun(object):
         self.conn.close()
 
 
-
     def commit(self):
         """
         """
@@ -395,9 +394,14 @@ class Sugegasakun(object):
                 + " , ifnull(fi.shitsudo, 0.0) shitsudo" \
                 + " , ifnull(fi.kiatsu, 0.0) kiatsu" \
                 + " , ifnull(uv.uvindex, 0.0) uvindex" \
-                + " , ifnull(lx.lux, 0.0) lux" \
-                + " , substring(fg.gpsdate, 1, 10) gps_ymd" \
-                + " from" \
+                + " , ifnull(lx.lux, 0.0) lux"
+
+            if self.is_local:
+                cmd += " , substr(fg.gpsdate, 1, 10) gps_ymd"
+            else:
+                cmd += " , substring(fg.gpsdate, 1, 10) gps_ymd"
+
+            cmd += " from" \
                 + "  filename_gpsdate fg" \
                 + " left join gpsdata gps" \
                 + "   on gps.filename = fg.filename" \
@@ -408,11 +412,12 @@ class Sugegasakun(object):
                 + " left outer join luxdata lx" \
                 + "   on lx.filename = fg.filename" \
                 + " where fg.gpsdate is not null" \
-                + " and   fg.gpsdate >= %s " \
-                + " and   fg.gpsdate <  %s " \
+                + " and   fg.gpsdate >= '%s' " \
+                + " and   fg.gpsdate <  '%s' " \
                 + " order by" \
-                + "   fg.gpsdate" 
-            cur.execute(cmd, (gpsdate_fr, gpsdate_to, ))
+                + "   fg.gpsdate"
+            cmd = cmd % (gpsdate_fr, gpsdate_to)
+            cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
         finally:
@@ -446,18 +451,17 @@ class Sugegasakun(object):
                 + ", gpsdate_from, gpsdate_to" \
                 + ", filename_from, filename_to" \
                 + ") VALUES (" \
-                + "  %s, %s, %s" \
-                + ", %s, %s, %s" \
+                + "  '%s', '%s', '%s'" \
+                + ", %s, %s, '%s'" \
                 + ", %s, %s, %s" \
                 + ", %s, %s, %s" \
                 + ", %s, %s, %s" \
                 + ", %s, %s, %s" \
                 + ", %s, %s, %s" \
                 + ", %s, %s" \
-                + ", %s, %s" \
-                + ", %s, %s" \
+                + ", '%s', '%s', '%s', '%s'" \
                 + ")"
-            cur.execute(cmd, (
+            cmd = cmd % (
                     gps_ymd, start_time, ended_time,
                     ido, keido, basho_nm,
                     ondo_per_day, minondo_per_day, maxondo_per_day,
@@ -467,7 +471,8 @@ class Sugegasakun(object):
                     lux_per_day, minlux_per_day, maxlux_per_day, 
                     minkoudo_per_day, maxkoudo_per_day,
                     gpsdate_from, gpsdate_to,
-                    filename_from, filename_to,))
+                    filename_from, filename_to)
+            cur.execute(cmd)
         finally:
             cur.close()
 

@@ -89,7 +89,6 @@ class BaseHandler(tornado.web.RequestHandler):
             dd = int(rec["gpsdate"][9:11])
             hh = int(rec["gpsdate"][11:13])
             mi = int(rec["gpsdate"][14:16])
-            print(yy, mm, dd, hh, mi)
             if rec["koudo"] > 0:
                 grp_koudos.append([yy, mm, dd, hh, mi, rec["koudo"]])
             if rec["ondo"] > 0:

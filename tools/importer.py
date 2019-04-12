@@ -1,3 +1,4 @@
+import sys
 import os
 import math
 from concurrent.futures import ThreadPoolExecutor
@@ -31,7 +32,7 @@ def import_gps(filename):
             d.commit()
         return 0
     except:
-        print(filename)
+        print("Error import_gps %s" % (filename))
         return 4
 
 
@@ -50,7 +51,7 @@ def import_field(filename):
             d.commit()
         return 0
     except:
-        print(filename)
+        print("Error import_field %s" % (filename))
         return 4
 
 
@@ -70,7 +71,7 @@ def import_uvindex(filename):
         return 0
 
     except:
-        print(filename)
+        print("Error import_uvindex %s" % (filename))
         return 4
     
 
@@ -84,13 +85,13 @@ def import_lux(filename):
             return 1
 
         fn = _cut_extention(filename)
-        with database.Sugegasakun(IS_LOCALDB) as d:
+        with database.Sugegasakun(config.LOCALDB) as d:
             d.import_luxdata(fn, lux.lux, lux.full, lux.ir)
             d.commit()
         return 0
 
     except:
-        print(filename)
+        print("Error import_lux %s" % (filename))
         return 4
 
 
@@ -113,39 +114,45 @@ def import_files(filename):
     
 
 def generate_summary(gps_ymd):
+    print(gps_ymd)
 
-    with database.Sugegasakun(config.LOCALDB) as d:
+    try:
+        with database.Sugegasakun(config.LOCALDB) as d:
 
-        smry = summary.Summary(gps_ymd)
+            smry = summary.Summary(gps_ymd)
 
-        # 日付に一致する各種データを取得
-        for rec in d.fill_all_datas_gpsymd(gps_ymd):
-            smry.stack(rec)
+            # 日付に一致する各種データを取得
+            for rec in d.fill_all_datas_gpsymd(gps_ymd):
+                smry.stack(rec)
 
-        # 追加
-        d.import_summary(
-                gps_ymd,
-                smry.start_time,
-                smry.ended_time,
-                smry.avgondo_per_day(),
-                smry.minondo_per_day(),
-                smry.maxondo_per_day(),
-                smry.avgshitsudo_per_day(),
-                smry.minshitsudo_per_day(),
-                smry.maxshitsudo_per_day(),
-                smry.avgkiatsu_per_day(),
-                smry.minkiatsu_per_day(),
-                smry.maxkiatsu_per_day(),
-                smry.avguvindex_per_day(),
-                smry.minuvindex_per_day(),
-                smry.maxuvindex_per_day(),
-                smry.avglux_per_day(),
-                smry.minlux_per_day(),
-                smry.maxlux_per_day(), 
-                smry.minkoudo_per_day(),
-                smry.maxkoudo_per_day())
+            # 追加
+            d.import_summary(
+                    gps_ymd,
+                    smry.start_time,
+                    smry.ended_time,
+                    smry.avgondo_per_day(),
+                    smry.minondo_per_day(),
+                    smry.maxondo_per_day(),
+                    smry.avgshitsudo_per_day(),
+                    smry.minshitsudo_per_day(),
+                    smry.maxshitsudo_per_day(),
+                    smry.avgkiatsu_per_day(),
+                    smry.minkiatsu_per_day(),
+                    smry.maxkiatsu_per_day(),
+                    smry.avguvindex_per_day(),
+                    smry.minuvindex_per_day(),
+                    smry.maxuvindex_per_day(),
+                    smry.avglux_per_day(),
+                    smry.minlux_per_day(),
+                    smry.maxlux_per_day(), 
+                    smry.minkoudo_per_day(),
+                    smry.maxkoudo_per_day())
 
-        d.commit()
+            d.commit()
+    except:
+        print("summary", gps_ymd)
+        print(sys.exc_info()[0])
+
 
 
 def _is_long_distance(pre_datetime, pre_ido, pre_keido, now_datetime, ido, keido):
@@ -307,6 +314,7 @@ def main():
 
         d.import_filename_gpsdata()
         d.patch_filename_gpsdata()
+        d.commit()
 
     print(datetime.now(), "done!")
 

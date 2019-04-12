@@ -17,6 +17,8 @@ class Sugegasakun(object):
             import sqlite3
             self.is_local = True
             self.conn = sqlite3.connect(localdb)
+            self.conn.row_factory = sqlite3.Row
+
 
 
     def connect(self, host, db, uid, pwd):
@@ -134,9 +136,14 @@ class Sugegasakun(object):
         try:
             cmd = self._listing_sql() \
                 + " WHERE s.gpsymd like '" + q + "'" \
-                + " ORDER by" \
-                + "   substring(s.gpsymd, 6, 10)" \
-                + ",  s.gpsymd"
+                + " ORDER by"
+
+            if self.is_local:
+                cmd += "   substr(s.gpsymd, 6, 10)"
+            else:
+                cmd += "   substring(s.gpsymd, 6, 10)"
+            
+            cmd += ",  s.gpsymd"
             cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
@@ -160,13 +167,21 @@ class Sugegasakun(object):
 
         cur = self.conn.cursor()
         try:
-            cmd = self._listing_sql() \
-                + " WHERE substring(s.gpsymd, 6, 10) >= %s" \
-                + " AND   substring(s.gpsymd, 6, 10) <= %s" \
-                + " ORDER by" \
-                + "   substring(s.gpsymd, 6, 10)" \
-                + ",  s.gpsymd"
-            cur.execute(cmd, (date_from, date_to,))
+            cmd = self._listing_sql()
+            if self.is_local:
+                cmd += " WHERE substr(s.gpsymd, 6, 10) >= '%s'" \
+                    +  " AND   substr(s.gpsymd, 6, 10) <= '%s'" \
+                    +  " ORDER by" \
+                    +  "   substr(s.gpsymd, 6, 10)" \
+                    +  ",  s.gpsymd"
+            else:
+                cmd += " WHERE substring(s.gpsymd, 6, 10) >= '%s'" \
+                    +  " AND   substring(s.gpsymd, 6, 10) <= '%s'" \
+                    +  " ORDER by" \
+                    +  "   substring(s.gpsymd, 6, 10)" \
+                    +  ",  s.gpsymd"
+            cmd = cmd % (date_from, date_to)
+            cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
         finally:
@@ -199,9 +214,12 @@ class Sugegasakun(object):
                 cmd += " AND x.basho_nm like '%" + basho + "%'"
             if q != "":
                 cmd += " AND x.gpsymd like '" + q + "'"
-            cmd += " ORDER by" \
-                +  "   substring(x.gpsymd, 6, 10)" \
-                +  " , x.gpsymd"
+            cmd += " ORDER by"
+            if self.is_local:
+                cmd +=  "   substr(x.gpsymd, 6, 10)"
+            else:
+                cmd +=  "   substring(x.gpsymd, 6, 10)"
+            cmd +=  " , x.gpsymd"
             cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
@@ -241,12 +259,13 @@ class Sugegasakun(object):
                 + " , s.gpsdate_to" \
                 + " from" \
                 + "   summary_places s" \
-                + " where s.gpsymd = %s"
+                + " where s.gpsymd = '%s'"
+            cmd =  cmd % ymd
             if not start_time == "":
                 cmd += " and   s.start_time = '" + start_time + "'"
             cmd += " order by" \
                 +  "   s.start_time"
-            cur.execute(cmd, (ymd,))
+            cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
         finally:
@@ -260,11 +279,13 @@ class Sugegasakun(object):
         cur = self.conn.cursor()
         try:
             cmd = " SELECT * FROM gpsdata"  \
-                + " WHERE gpsdate >= %s and gpsdate <= %s" \
+                + " WHERE gpsdate >= '%s'" \
+                + " AND   gpsdate <= '%s'" \
                 + " AND   ido > 0.0" \
                 + " ORDER BY" \
                 + "   gpsdate"
-            cur.execute(cmd, (gpsdate_from, gpsdate_to,))
+            cmd = cmd % (gpsdate_from, gpsdate_to)
+            cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
         finally:
@@ -294,11 +315,12 @@ class Sugegasakun(object):
                 + "   on u.filename = g.filename" \
                 + " left join luxdata l" \
                 + "   on l.filename = g.filename" \
-                + " WHERE gpsdate >= %s" \
-                + " AND   gpsdate <= %s" \
+                + " WHERE gpsdate >= '%s'" \
+                + " AND   gpsdate <= '%s'" \
                 + " ORDER BY" \
                 + "   gpsdate"
-            cur.execute(cmd, (gpsdate_from, gpsdate_to,))
+            cmd = cmd % (gpsdate_from, gpsdate_to)
+            cur.execute(cmd)
             for row in cur.fetchall():
                 yield row
         finally:
