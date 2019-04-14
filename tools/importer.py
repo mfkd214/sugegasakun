@@ -114,7 +114,6 @@ def import_files(filename):
     
 
 def generate_summary(gps_ymd):
-    print(gps_ymd)
 
     try:
         with database.Sugegasakun(config.LOCALDB) as d:
