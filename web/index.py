@@ -162,7 +162,7 @@ class TraceHandler(BaseHandler):
     def get(self, ymd):
         
         records = self.application.db.fill_summary_places(ymd, "")
-        grp_koudos, grp_ondos, grp_shitsudos, gps_kiatsus, grp_uvindexes, grp_luxes  \
+        grp_koudos, grp_ondos, grp_shitsudos, grp_kiatsus, grp_uvindexes, grp_luxes  \
             = self.generate_graphdata(ymd, "")
 
         zoom = 14
@@ -182,11 +182,10 @@ class TraceHandler(BaseHandler):
                     key = key,
                     grp_ondos = grp_ondos,
                     grp_shitsudos = grp_shitsudos,
-                    gps_kiatsus = gps_kiatsus,
+                    grp_kiatsus = grp_kiatsus,
                     grp_koudos = grp_koudos,
                     grp_uvindexes = grp_uvindexes,
                     grp_luxes = grp_luxes)
-
 
 
 
@@ -194,7 +193,7 @@ class Trace2Handler(BaseHandler):
     def get(self, ymd, start_time):
 
         records = self.application.db.fill_summary_places(ymd, "")
-        grp_koudos, grp_ondos, grp_shitsudos, gps_kiatsus, grp_uvindexes, grp_luxes  \
+        grp_koudos, grp_ondos, grp_shitsudos, grp_kiatsus, grp_uvindexes, grp_luxes  \
             = self.generate_graphdata(ymd, start_time)
 
         zoom = 14
@@ -214,7 +213,7 @@ class Trace2Handler(BaseHandler):
                     key = key,
                     grp_ondos = grp_ondos,
                     grp_shitsudos = grp_shitsudos,
-                    gps_kiatsus = gps_kiatsus,
+                    grp_kiatsus = grp_kiatsus,
                     grp_koudos = grp_koudos,
                     grp_uvindexes = grp_uvindexes,
                     grp_luxes = grp_luxes)
@@ -239,6 +238,7 @@ class Application(tornado.web.Application):
             debug=True,
         )
         super(Application, self).__init__(handlers, **settings)
+
 
 
 def main():
