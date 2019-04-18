@@ -142,7 +142,6 @@ class WhereHandler(BaseHandler):
 class WhenHandler(BaseHandler):
     def get(self):
 
-        self.request_parse()
         cnt = self.request_parse()
         if cnt == 0:
             self.month = str(datetime.now().month)
@@ -163,7 +162,7 @@ class TraceHandler(BaseHandler):
         
         records = self.application.db.fill_summary_places(ymd, "")
         grp_koudos, grp_ondos, grp_shitsudos, grp_kiatsus, grp_uvindexes, grp_luxes  \
-            = self.generate_graphdata(ymd, "")
+                = self.generate_graphdata(ymd, "")
 
         zoom = 14
         size = "{0}x{1}".format("640", "480")
@@ -194,7 +193,7 @@ class Trace2Handler(BaseHandler):
 
         records = self.application.db.fill_summary_places(ymd, "")
         grp_koudos, grp_ondos, grp_shitsudos, grp_kiatsus, grp_uvindexes, grp_luxes  \
-            = self.generate_graphdata(ymd, start_time)
+                = self.generate_graphdata(ymd, start_time)
 
         zoom = 14
         size = "{0}x{1}".format("640", "480")
